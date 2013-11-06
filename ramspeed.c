@@ -37,6 +37,38 @@ unsigned int bench_memcpy(unsigned int loop, unsigned int size)
 	return after - before;
 }
 
+#ifdef __arm__
+unsigned int bench_memcpy2(unsigned int loop, unsigned int size)
+{
+	unsigned long long before, after;
+	unsigned int i;
+	char *src, *dst;
+	char *s, *d;
+
+	src = malloc(size);
+	dst = malloc(size);
+
+	/* ensure the pages are allocated */
+	memset(src, 0, size);
+	memset(dst, 0, size);
+
+	before = rdtsc();
+	for (i = 0; i < loop; i++) {
+		char *end = dst + size;
+		d = dst; s = src;
+		for (d = dst; d < end; /*ptr += 32*/)
+			asm("ldmia %0!, { r4-r11 }\n\t"
+			    "stmia %1!, { r4-r11 }\n\t"
+			    : "=r" (s), "=r" (d) : "0" (d), "1" (s) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+	}
+	after = rdtsc();
+
+	free(src);
+	free(dst);
+	return after - before;
+}
+#endif
+
 unsigned int bench_memset(unsigned int loop, unsigned int size)
 {
 	unsigned long long before, after;
@@ -57,11 +89,12 @@ unsigned int bench_memset(unsigned int loop, unsigned int size)
 	return after - before;
 }
 
-unsigned int bench_memchr(unsigned int loop, unsigned int size)
+#ifdef __arm__
+unsigned int bench_write32(unsigned int loop, unsigned int size)
 {
 	unsigned long long before, after;
-	unsigned int i, j;
-	int *dst;
+	unsigned int i;
+	char *dst, *ptr, *end;
 
 	dst = malloc(size);
 
@@ -70,10 +103,38 @@ unsigned int bench_memchr(unsigned int loop, unsigned int size)
 
 	before = rdtsc();
 	for (i = 0; i < loop; i++) {
-		for (j = 0; j < size / sizeof(*dst); j += 2) {
-			if (dst[j] || dst[j+1])
-				break;
-		}
+		end = dst + size;
+		for (ptr = dst; ptr < end; /*ptr += 32*/)
+			asm("stmia %0!, { r4-r11 }" : "=r" (ptr) : "0" (ptr) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+	}
+	after = rdtsc();
+
+	free(dst);
+	return after - before;
+}
+
+unsigned int bench_memchr(unsigned int loop, unsigned int size)
+{
+	unsigned long long before, after;
+	unsigned int i;
+	char *dst, *ptr, *end;
+
+	dst = malloc(size);
+
+	/* ensure the pages are allocated */
+	memset(dst, 0, size);
+
+	before = rdtsc();
+	for (i = 0; i < loop; i++) {
+		end = dst + size;
+		for (ptr = dst; ptr < end; ptr += 32)
+			asm("ldmia %0, { r4-r11 }" :: "r" (ptr) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+		//for (ptr = dst; ptr < end; ptr += 16)
+		//	asm("ldmia %0, { r4-r7 }" :: "r" (ptr) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+		//for (ptr = dst; ptr < end; ptr += 8)
+		//	asm("ldmia %0, { r4-r5 }" :: "r" (ptr) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+		//for (ptr = dst; ptr < end; ptr += 4)
+		//	asm("ldm %0, { r4 }" :: "r" (ptr) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
 	}
 	after = rdtsc();
 
@@ -96,7 +157,7 @@ unsigned int bench_prefetch(unsigned int loop, unsigned int size)
 	for (i = 0; i < loop; i++) {
 		/* only prefetch the first word of each 32-byte cacheline. The
 		 * code has almost no effect on the speed, only the bandwidth
-		 * counts. Fetching 128 bytes at one instead of 32 doesn't help
+		 * counts. Fetching 128 bytes at once instead of 32 doesn't help
 		 * for instance.
 		 */
 		end = dst + size;
@@ -109,13 +170,19 @@ unsigned int bench_prefetch(unsigned int loop, unsigned int size)
 	free(dst);
 	return after - before;
 }
-
+#endif
 
 static struct test_fct test_fcts[] = {
+#ifdef __arm__
 	{ "bench_prefetch", bench_prefetch },
 	{ "bench_memchr", bench_memchr },
+	{ "bench_write32", bench_write32 },
+#endif
 	{ "bench_memset", bench_memset },
 	{ "bench_memcpy", bench_memcpy },
+#ifdef __arm__
+	//{ "bench_memcpy2", bench_memcpy2 },
+#endif
 	{ NULL, NULL }
 };
 
