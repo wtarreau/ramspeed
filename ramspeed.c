@@ -69,6 +69,27 @@ unsigned int bench_memcpy2(unsigned int loop, unsigned int size)
 }
 #endif
 
+unsigned int bench_memchr(unsigned int loop, unsigned int size)
+{
+	unsigned long long before, after;
+	unsigned int i;
+	char *dst;
+
+	dst = malloc(size);
+
+	/* ensure the pages are allocated */
+	memset(dst, 0, size);
+
+	before = rdtsc();
+	for (i = 0; i < loop; i++)
+		if (memchr(dst, i|1, size))
+			break;
+	after = rdtsc();
+
+	free(dst);
+	return after - before;
+}
+
 unsigned int bench_memset(unsigned int loop, unsigned int size)
 {
 	unsigned long long before, after;
@@ -178,6 +199,7 @@ static struct test_fct test_fcts[] = {
 	{ "bench_memchr", bench_memchr },
 	{ "bench_write32", bench_write32 },
 #endif
+	{ "bench_memchr", bench_memchr },
 	{ "bench_memset", bench_memset },
 	{ "bench_memcpy", bench_memcpy },
 #ifdef __arm__
