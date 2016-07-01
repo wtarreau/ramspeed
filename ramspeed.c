@@ -134,7 +134,7 @@ unsigned int bench_write32(unsigned int loop, unsigned int size)
 	return after - before;
 }
 
-unsigned int bench_memchr(unsigned int loop, unsigned int size)
+unsigned int bench_memchr_arm(unsigned int loop, unsigned int size)
 {
 	unsigned long long before, after;
 	unsigned int i;
@@ -196,7 +196,7 @@ unsigned int bench_prefetch(unsigned int loop, unsigned int size)
 static struct test_fct test_fcts[] = {
 #ifdef __arm__
 	{ "bench_prefetch", bench_prefetch },
-	{ "bench_memchr", bench_memchr },
+	{ "bench_memchr_arm", bench_memchr_arm },
 	{ "bench_write32", bench_write32 },
 #endif
 	{ "bench_memchr", bench_memchr },
