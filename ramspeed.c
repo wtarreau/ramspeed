@@ -83,7 +83,7 @@ unsigned int bench_memchr(unsigned int loop, unsigned int size)
 	before = rdtsc();
 	for (i = 0; i < loop; i++)
 		if (memchr(dst, i|1, size))
-			break;
+			return 0;
 	after = rdtsc();
 
 	free(dst);
