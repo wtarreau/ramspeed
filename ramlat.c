@@ -518,6 +518,7 @@ int main(int argc, char **argv)
 	int ptr_only = 0;
 	int quiet = 0;
 	int slowstart = 0;
+	int bw = 0;
 
 	usec = 100000;
 	size_max = 1048576;
@@ -532,8 +533,11 @@ int main(int argc, char **argv)
 		else if (strcmp(argv[1], "-s") == 0) {
 			slowstart = 1;
 		}
+		else if (strcmp(argv[1], "-b") == 0) {
+			bw = 1;
+		}
 		else {
-			fprintf(stderr, "Usage: prog [-p] [-s] [-q] [-h] <time> <area>\n");
+			fprintf(stderr, "Usage: prog [-b] [-p] [-s] [-q] [-h] <time> <area>\n");
 			exit(!!strcmp(argv[1], "-h"));
 		}
 		argc--;
@@ -562,7 +566,7 @@ int main(int argc, char **argv)
 		for (size = 1024; size <= size_max; size *= 2) {
 			printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 			ret = random_read_over_area(area, usec, size, sizeof(void *));
-			printf("%6u\n", ret);
+			printf("%6u\n", bw ? ret * sizeof(void *) : ret);
 		}
 	}
 	else {
@@ -573,7 +577,7 @@ int main(int argc, char **argv)
 			printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 			for (word = 4; word <= 64; word *= 2) {
 				ret = random_read_over_area(area, usec, size, word);
-				printf("%6u ", ret);
+				printf("%6u ", bw ? ret * word : ret);
 			}
 			printf("\n");
 		}
