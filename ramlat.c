@@ -517,6 +517,7 @@ int main(int argc, char **argv)
 	unsigned int ret, word;
 	int ptr_only = 0;
 	int quiet = 0;
+	int slowstart = 0;
 
 	usec = 100000;
 	size_max = 1048576;
@@ -527,6 +528,9 @@ int main(int argc, char **argv)
 		}
 		else if (strcmp(argv[1], "-q") == 0) {
 			quiet = 1;
+		}
+		else if (strcmp(argv[1], "-s") == 0) {
+			slowstart = 1;
 		}
 		argc--;
 		argv++;
@@ -539,6 +543,13 @@ int main(int argc, char **argv)
 		size_max = atol(argv[2]) * 1024;
 
 	area = malloc(size_max);
+
+	if (slowstart) {
+		set_alarm(500000);
+		memset(area, 0, size_max);
+		while (!stop_now);
+		set_alarm(0);
+	}
 
 	if (ptr_only) {
 		if (!quiet)
