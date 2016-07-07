@@ -532,6 +532,10 @@ int main(int argc, char **argv)
 		else if (strcmp(argv[1], "-s") == 0) {
 			slowstart = 1;
 		}
+		else {
+			fprintf(stderr, "Usage: prog [-p] [-s] [-q] [-h] <time> <area>\n");
+			exit(!!strcmp(argv[1], "-h"));
+		}
 		argc--;
 		argv++;
 	}
