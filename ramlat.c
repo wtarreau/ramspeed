@@ -97,6 +97,12 @@ static inline void read64_dual(char *area, off_t off1, off_t off2)
 {
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(area + off1)), "r" (*(uint64_t *)(area + off2)));
+		//asm volatile("" : : "r" (*(uint64_t *)(area + off1)));
+		//asm volatile("" : : "r" (*(uint64_t *)(area + off2)));
+
+		// +5.2% on cortex a9, -37% on MIPS, -28% on ARMv5, -2.3% on A53, -36% on Armada370
+		//asm volatile("" : : "r" (*(uint32_t *)(area + off1)), "r" (*(uint32_t *)(area + off1 + 4)));
+		//asm volatile("" : : "r" (*(uint32_t *)(area + off2)), "r" (*(uint32_t *)(area + off2 + 4)));
 	}
 	else {
 		asm volatile("" : : "r" (*(uint64_t *)(area + off1)));
@@ -111,6 +117,9 @@ static inline void read128(char *area, off_t off)
 {
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(area + off)), "r" (*(uint64_t *)(area + off + 8)));
+		// +1.5% on cortex a9, -22% on MIPS, -33% on ARMv5, -21% on A53, -36% on Armada370, -50% on x86_64
+		//asm volatile("" : : "r" (*(uint32_t *)(area + off)), "r" (*(uint32_t *)(area + off + 4)));
+		//asm volatile("" : : "r" (*(uint32_t *)(area + off + 8)), "r" (*(uint32_t *)(area + off + 12)));
 	}
 	else {
 		asm volatile("" : : "r" (*(uint64_t *)(area + off)));
@@ -195,8 +204,8 @@ static size_t mask_rounded_down(size_t size)
 
 /* Randomly accesses aligned words of size <word> bytes over <size> bytes of
  * area <area> for about <usec> microseconds, then returns the number of words
- * read per microsecond. Note: size is rounded down the the lower power of two.
- * It is mandatory that <word> is a power of two.
+ * read per microsecond. Note: size is rounded down to the lower power of two,
+ * and must be at least 4kB. It is mandatory that <word> is a power of two.
  */
 unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, size_t word)
 {
@@ -206,9 +215,9 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 	off_t rnd = 0;
 
 	mask = mask_rounded_down(size);
-	mask &= ~(word - 1);
-	mask &= ~(256UL | 128UL | 64UL); // these ones are manipulated in the loops
-	memset(area, 0, mask + 1);
+	mask &= -(size_t)4096;
+
+	memset(area, 0, size);//mask + 1);
 	rounds = 0;
 
 	set_alarm(usec);
@@ -217,278 +226,380 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 	switch (word) {
 	case 1:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
-				register off_t addr1, addr2;
+			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+				register off_t addr;
 
 				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 512-byte address space is crossed following pseudo-random
+				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
-				 * position and its mirror over the address mask. This ensures
-				 * non-contiguous accesses that prevent any streaming operation
-				 * from being performed.
+				 * position and a next one 512 bytes apart. This guarantees to
+				 * perform non-contiguous accesses that prevent any streaming
+				 * operation from being performed.
 				 */
-				rnd += 0x20200; // that's 257(prime) times 512
+				addr = rnd & mask;
 
-				addr1 = rnd   & mask;
-				addr2 = addr1 ^ mask;
-				read8_dual(area, addr1 + 0,   addr2 + 0);
-				read8_dual(area, addr1 + 256, addr2 + 256);
-				read8_dual(area, addr1 + 128, addr2 + 128);
-				read8_dual(area, addr1 + 384, addr2 + 384);
-				read8_dual(area, addr1 + 320, addr2 + 320);
-				read8_dual(area, addr1 + 64,  addr2 + 64);
-				read8_dual(area, addr1 + 192, addr2 + 192);
-				read8_dual(area, addr1 + 448, addr2 + 448);
+				read8_dual(area, addr + 0000 + 0,   addr + 0000 + 512 + 0);
+				read8_dual(area, addr + 0000 + 256, addr + 0000 + 512 + 256);
+				read8_dual(area, addr + 0000 + 128, addr + 0000 + 512 + 128);
+				read8_dual(area, addr + 0000 + 384, addr + 0000 + 512 + 384);
+				read8_dual(area, addr + 0000 + 320, addr + 0000 + 512 + 320);
+				read8_dual(area, addr + 0000 + 64,  addr + 0000 + 512 + 64);
+				read8_dual(area, addr + 0000 + 192, addr + 0000 + 512 + 192);
+				read8_dual(area, addr + 0000 + 448, addr + 0000 + 512 + 448);
+
+				read8_dual(area, addr + 1024 + 0,   addr + 1024 + 512 + 0);
+				read8_dual(area, addr + 1024 + 256, addr + 1024 + 512 + 256);
+				read8_dual(area, addr + 1024 + 128, addr + 1024 + 512 + 128);
+				read8_dual(area, addr + 1024 + 384, addr + 1024 + 512 + 384);
+				read8_dual(area, addr + 1024 + 320, addr + 1024 + 512 + 320);
+				read8_dual(area, addr + 1024 + 64,  addr + 1024 + 512 + 64);
+				read8_dual(area, addr + 1024 + 192, addr + 1024 + 512 + 192);
+				read8_dual(area, addr + 1024 + 448, addr + 1024 + 512 + 448);
+
+				read8_dual(area, addr + 2048 + 0,   addr + 2048 + 512 + 0);
+				read8_dual(area, addr + 2048 + 256, addr + 2048 + 512 + 256);
+				read8_dual(area, addr + 2048 + 128, addr + 2048 + 512 + 128);
+				read8_dual(area, addr + 2048 + 384, addr + 2048 + 512 + 384);
+				read8_dual(area, addr + 2048 + 320, addr + 2048 + 512 + 320);
+				read8_dual(area, addr + 2048 + 64,  addr + 2048 + 512 + 64);
+				read8_dual(area, addr + 2048 + 192, addr + 2048 + 512 + 192);
+				read8_dual(area, addr + 2048 + 448, addr + 2048 + 512 + 448);
+
+				read8_dual(area, addr + 3072 + 0,   addr + 3072 + 512 + 0);
+				read8_dual(area, addr + 3072 + 256, addr + 3072 + 512 + 256);
+				read8_dual(area, addr + 3072 + 128, addr + 3072 + 512 + 128);
+				read8_dual(area, addr + 3072 + 384, addr + 3072 + 512 + 384);
+				read8_dual(area, addr + 3072 + 320, addr + 3072 + 512 + 320);
+				read8_dual(area, addr + 3072 + 64,  addr + 3072 + 512 + 64);
+				read8_dual(area, addr + 3072 + 192, addr + 3072 + 512 + 192);
+				read8_dual(area, addr + 3072 + 448, addr + 3072 + 512 + 448);
+
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
 	case 2:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
-				register off_t addr1, addr2;
+			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+				register off_t addr;
 
 				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 512-byte address space is crossed following pseudo-random
+				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
-				 * position and its mirror over the address mask. This ensures
-				 * non-contiguous accesses that prevent any streaming operation
-				 * from being performed.
+				 * position and a next one 512 bytes apart. This guarantees to
+				 * perform non-contiguous accesses that prevent any streaming
+				 * operation from being performed.
 				 */
-				rnd += 0x20200; // that's 257(prime) times 512
+				addr = rnd & mask;
 
-				addr1 = rnd   & mask;
-				addr2 = addr1 ^ mask;
-				read16_dual(area, addr1 + 0,   addr2 + 0);
-				read16_dual(area, addr1 + 256, addr2 + 256);
-				read16_dual(area, addr1 + 128, addr2 + 128);
-				read16_dual(area, addr1 + 384, addr2 + 384);
-				read16_dual(area, addr1 + 320, addr2 + 320);
-				read16_dual(area, addr1 + 64,  addr2 + 64);
-				read16_dual(area, addr1 + 192, addr2 + 192);
-				read16_dual(area, addr1 + 448, addr2 + 448);
+				read16_dual(area, addr + 0000 + 0,   addr + 0000 + 512 + 0);
+				read16_dual(area, addr + 0000 + 256, addr + 0000 + 512 + 256);
+				read16_dual(area, addr + 0000 + 128, addr + 0000 + 512 + 128);
+				read16_dual(area, addr + 0000 + 384, addr + 0000 + 512 + 384);
+				read16_dual(area, addr + 0000 + 320, addr + 0000 + 512 + 320);
+				read16_dual(area, addr + 0000 + 64,  addr + 0000 + 512 + 64);
+				read16_dual(area, addr + 0000 + 192, addr + 0000 + 512 + 192);
+				read16_dual(area, addr + 0000 + 448, addr + 0000 + 512 + 448);
+
+				read16_dual(area, addr + 1024 + 0,   addr + 1024 + 512 + 0);
+				read16_dual(area, addr + 1024 + 256, addr + 1024 + 512 + 256);
+				read16_dual(area, addr + 1024 + 128, addr + 1024 + 512 + 128);
+				read16_dual(area, addr + 1024 + 384, addr + 1024 + 512 + 384);
+				read16_dual(area, addr + 1024 + 320, addr + 1024 + 512 + 320);
+				read16_dual(area, addr + 1024 + 64,  addr + 1024 + 512 + 64);
+				read16_dual(area, addr + 1024 + 192, addr + 1024 + 512 + 192);
+				read16_dual(area, addr + 1024 + 448, addr + 1024 + 512 + 448);
+
+				read16_dual(area, addr + 2048 + 0,   addr + 2048 + 512 + 0);
+				read16_dual(area, addr + 2048 + 256, addr + 2048 + 512 + 256);
+				read16_dual(area, addr + 2048 + 128, addr + 2048 + 512 + 128);
+				read16_dual(area, addr + 2048 + 384, addr + 2048 + 512 + 384);
+				read16_dual(area, addr + 2048 + 320, addr + 2048 + 512 + 320);
+				read16_dual(area, addr + 2048 + 64,  addr + 2048 + 512 + 64);
+				read16_dual(area, addr + 2048 + 192, addr + 2048 + 512 + 192);
+				read16_dual(area, addr + 2048 + 448, addr + 2048 + 512 + 448);
+
+				read16_dual(area, addr + 3072 + 0,   addr + 3072 + 512 + 0);
+				read16_dual(area, addr + 3072 + 256, addr + 3072 + 512 + 256);
+				read16_dual(area, addr + 3072 + 128, addr + 3072 + 512 + 128);
+				read16_dual(area, addr + 3072 + 384, addr + 3072 + 512 + 384);
+				read16_dual(area, addr + 3072 + 320, addr + 3072 + 512 + 320);
+				read16_dual(area, addr + 3072 + 64,  addr + 3072 + 512 + 64);
+				read16_dual(area, addr + 3072 + 192, addr + 3072 + 512 + 192);
+				read16_dual(area, addr + 3072 + 448, addr + 3072 + 512 + 448);
+
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
 	case 4:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
-				register off_t addr1, addr2;
+			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+				register off_t addr;
 
 				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 512-byte address space is crossed following pseudo-random
+				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
-				 * position and its mirror over the address mask. This ensures
-				 * non-contiguous accesses that prevent any streaming operation
-				 * from being performed.
+				 * position and a next one 512 bytes apart. This guarantees to
+				 * perform non-contiguous accesses that prevent any streaming
+				 * operation from being performed.
 				 */
-				rnd += 0x20200; // that's 257(prime) times 512
+				addr = rnd & mask;
 
-				addr1 = rnd   & mask;
-				addr2 = addr1 ^ mask;
-				read32_dual(area, addr1 + 0,   addr2 + 0);
-				read32_dual(area, addr1 + 256, addr2 + 256);
-				read32_dual(area, addr1 + 128, addr2 + 128);
-				read32_dual(area, addr1 + 384, addr2 + 384);
-				read32_dual(area, addr1 + 320, addr2 + 320);
-				read32_dual(area, addr1 + 64,  addr2 + 64);
-				read32_dual(area, addr1 + 192, addr2 + 192);
-				read32_dual(area, addr1 + 448, addr2 + 448);
+				read32_dual(area, addr + 0000 + 0,   addr + 0000 + 512 + 0);
+				read32_dual(area, addr + 0000 + 256, addr + 0000 + 512 + 256);
+				read32_dual(area, addr + 0000 + 128, addr + 0000 + 512 + 128);
+				read32_dual(area, addr + 0000 + 384, addr + 0000 + 512 + 384);
+				read32_dual(area, addr + 0000 + 320, addr + 0000 + 512 + 320);
+				read32_dual(area, addr + 0000 + 64,  addr + 0000 + 512 + 64);
+				read32_dual(area, addr + 0000 + 192, addr + 0000 + 512 + 192);
+				read32_dual(area, addr + 0000 + 448, addr + 0000 + 512 + 448);
+
+				read32_dual(area, addr + 1024 + 0,   addr + 1024 + 512 + 0);
+				read32_dual(area, addr + 1024 + 256, addr + 1024 + 512 + 256);
+				read32_dual(area, addr + 1024 + 128, addr + 1024 + 512 + 128);
+				read32_dual(area, addr + 1024 + 384, addr + 1024 + 512 + 384);
+				read32_dual(area, addr + 1024 + 320, addr + 1024 + 512 + 320);
+				read32_dual(area, addr + 1024 + 64,  addr + 1024 + 512 + 64);
+				read32_dual(area, addr + 1024 + 192, addr + 1024 + 512 + 192);
+				read32_dual(area, addr + 1024 + 448, addr + 1024 + 512 + 448);
+
+				read32_dual(area, addr + 2048 + 0,   addr + 2048 + 512 + 0);
+				read32_dual(area, addr + 2048 + 256, addr + 2048 + 512 + 256);
+				read32_dual(area, addr + 2048 + 128, addr + 2048 + 512 + 128);
+				read32_dual(area, addr + 2048 + 384, addr + 2048 + 512 + 384);
+				read32_dual(area, addr + 2048 + 320, addr + 2048 + 512 + 320);
+				read32_dual(area, addr + 2048 + 64,  addr + 2048 + 512 + 64);
+				read32_dual(area, addr + 2048 + 192, addr + 2048 + 512 + 192);
+				read32_dual(area, addr + 2048 + 448, addr + 2048 + 512 + 448);
+
+				read32_dual(area, addr + 3072 + 0,   addr + 3072 + 512 + 0);
+				read32_dual(area, addr + 3072 + 256, addr + 3072 + 512 + 256);
+				read32_dual(area, addr + 3072 + 128, addr + 3072 + 512 + 128);
+				read32_dual(area, addr + 3072 + 384, addr + 3072 + 512 + 384);
+				read32_dual(area, addr + 3072 + 320, addr + 3072 + 512 + 320);
+				read32_dual(area, addr + 3072 + 64,  addr + 3072 + 512 + 64);
+				read32_dual(area, addr + 3072 + 192, addr + 3072 + 512 + 192);
+				read32_dual(area, addr + 3072 + 448, addr + 3072 + 512 + 448);
+
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
 	case 8: {
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
-				register off_t addr1, addr2;
+			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+				register off_t addr;
 
 				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 512-byte address space is crossed following pseudo-random
+				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
-				 * position and its mirror over the address mask. This ensures
-				 * non-contiguous accesses that prevent any streaming operation
-				 * from being performed.
+				 * position and a next one 512 bytes apart. This guarantees to
+				 * perform non-contiguous accesses that prevent any streaming
+				 * operation from being performed.
 				 */
-				rnd += 0x20200; // that's 257(prime) times 512
+				addr = rnd & mask;
 
-				addr1 = rnd   & mask;
-				addr2 = addr1 ^ mask;
-				read64_dual(area, addr1 + 0,   addr2 + 0);
-				read64_dual(area, addr1 + 256, addr2 + 256);
-				read64_dual(area, addr1 + 128, addr2 + 128);
-				read64_dual(area, addr1 + 384, addr2 + 384);
-				read64_dual(area, addr1 + 320, addr2 + 320);
-				read64_dual(area, addr1 + 64,  addr2 + 64);
-				read64_dual(area, addr1 + 192, addr2 + 192);
-				read64_dual(area, addr1 + 448, addr2 + 448);
+				read64_dual(area, addr + 0000 + 0,   addr + 0000 + 512 + 0);
+				read64_dual(area, addr + 0000 + 256, addr + 0000 + 512 + 256);
+				read64_dual(area, addr + 0000 + 128, addr + 0000 + 512 + 128);
+				read64_dual(area, addr + 0000 + 384, addr + 0000 + 512 + 384);
+				read64_dual(area, addr + 0000 + 320, addr + 0000 + 512 + 320);
+				read64_dual(area, addr + 0000 + 64,  addr + 0000 + 512 + 64);
+				read64_dual(area, addr + 0000 + 192, addr + 0000 + 512 + 192);
+				read64_dual(area, addr + 0000 + 448, addr + 0000 + 512 + 448);
+
+				read64_dual(area, addr + 1024 + 0,   addr + 1024 + 512 + 0);
+				read64_dual(area, addr + 1024 + 256, addr + 1024 + 512 + 256);
+				read64_dual(area, addr + 1024 + 128, addr + 1024 + 512 + 128);
+				read64_dual(area, addr + 1024 + 384, addr + 1024 + 512 + 384);
+				read64_dual(area, addr + 1024 + 320, addr + 1024 + 512 + 320);
+				read64_dual(area, addr + 1024 + 64,  addr + 1024 + 512 + 64);
+				read64_dual(area, addr + 1024 + 192, addr + 1024 + 512 + 192);
+				read64_dual(area, addr + 1024 + 448, addr + 1024 + 512 + 448);
+
+				read64_dual(area, addr + 2048 + 0,   addr + 2048 + 512 + 0);
+				read64_dual(area, addr + 2048 + 256, addr + 2048 + 512 + 256);
+				read64_dual(area, addr + 2048 + 128, addr + 2048 + 512 + 128);
+				read64_dual(area, addr + 2048 + 384, addr + 2048 + 512 + 384);
+				read64_dual(area, addr + 2048 + 320, addr + 2048 + 512 + 320);
+				read64_dual(area, addr + 2048 + 64,  addr + 2048 + 512 + 64);
+				read64_dual(area, addr + 2048 + 192, addr + 2048 + 512 + 192);
+				read64_dual(area, addr + 2048 + 448, addr + 2048 + 512 + 448);
+
+				read64_dual(area, addr + 3072 + 0,   addr + 3072 + 512 + 0);
+				read64_dual(area, addr + 3072 + 256, addr + 3072 + 512 + 256);
+				read64_dual(area, addr + 3072 + 128, addr + 3072 + 512 + 128);
+				read64_dual(area, addr + 3072 + 384, addr + 3072 + 512 + 384);
+				read64_dual(area, addr + 3072 + 320, addr + 3072 + 512 + 320);
+				read64_dual(area, addr + 3072 + 64,  addr + 3072 + 512 + 64);
+				read64_dual(area, addr + 3072 + 192, addr + 3072 + 512 + 192);
+				read64_dual(area, addr + 3072 + 448, addr + 3072 + 512 + 448);
+
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
 	}
 	case 16:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
-				register off_t addr1, addr2;
+			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+				register off_t addr;
 
 				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 512-byte address space is crossed following pseudo-random
+				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
-				 * position and its mirror over the address mask. This ensures
-				 * non-contiguous accesses that prevent any streaming operation
-				 * from being performed.
+				 * position and a next one 512 bytes apart. This guarantees to
+				 * perform non-contiguous accesses that prevent any streaming
+				 * operation from being performed.
 				 */
-				rnd += 0x20200; // that's 257(prime) times 512
+				addr = rnd & mask;
 
-				addr1 = rnd   & mask; // @0 mod 512
-				read128(area, addr1);
-				addr2 = addr1 ^ mask; // @0 mod 512
-				read128(area, addr2);
+				read128(area, addr + 0000 + 0);   read128(area,  addr + 0000 + 512 + 0);
+				read128(area, addr + 0000 + 256); read128(area,  addr + 0000 + 512 + 256);
+				read128(area, addr + 0000 + 128); read128(area,  addr + 0000 + 512 + 128);
+				read128(area, addr + 0000 + 384); read128(area,  addr + 0000 + 512 + 384);
+				read128(area, addr + 0000 + 320); read128(area,  addr + 0000 + 512 + 320);
+				read128(area, addr + 0000 + 64);  read128(area,  addr + 0000 + 512 + 64);
+				read128(area, addr + 0000 + 192); read128(area,  addr + 0000 + 512 + 192);
+				read128(area, addr + 0000 + 448); read128(area,  addr + 0000 + 512 + 448);
 
-				addr1 += 256;  // @256 mod 512
-				read128(area, addr1);
-				addr2 += 256;  // @256 mod 512
-				read128(area, addr2);
+				read128(area, addr + 1024 + 0);   read128(area,  addr + 1024 + 512 + 0);
+				read128(area, addr + 1024 + 256); read128(area,  addr + 1024 + 512 + 256);
+				read128(area, addr + 1024 + 128); read128(area,  addr + 1024 + 512 + 128);
+				read128(area, addr + 1024 + 384); read128(area,  addr + 1024 + 512 + 384);
+				read128(area, addr + 1024 + 320); read128(area,  addr + 1024 + 512 + 320);
+				read128(area, addr + 1024 + 64);  read128(area,  addr + 1024 + 512 + 64);
+				read128(area, addr + 1024 + 192); read128(area,  addr + 1024 + 512 + 192);
+				read128(area, addr + 1024 + 448); read128(area,  addr + 1024 + 512 + 448);
 
-				addr1 -= 128;  // @128 mod 512
-				read128(area, addr1);
-				addr2 -= 128;  // @128 mod 512
-				read128(area, addr2);
+				read128(area, addr + 2048 + 0);   read128(area,  addr + 2048 + 512 + 0);
+				read128(area, addr + 2048 + 256); read128(area,  addr + 2048 + 512 + 256);
+				read128(area, addr + 2048 + 128); read128(area,  addr + 2048 + 512 + 128);
+				read128(area, addr + 2048 + 384); read128(area,  addr + 2048 + 512 + 384);
+				read128(area, addr + 2048 + 320); read128(area,  addr + 2048 + 512 + 320);
+				read128(area, addr + 2048 + 64);  read128(area,  addr + 2048 + 512 + 64);
+				read128(area, addr + 2048 + 192); read128(area,  addr + 2048 + 512 + 192);
+				read128(area, addr + 2048 + 448); read128(area,  addr + 2048 + 512 + 448);
 
-				addr1 += 256;  // @384 mod 512
-				read128(area, addr1);
-				addr2 += 256;  // @384 mod 512
-				read128(area, addr2);
+				read128(area, addr + 3072 + 0);   read128(area,  addr + 3072 + 512 + 0);
+				read128(area, addr + 3072 + 256); read128(area,  addr + 3072 + 512 + 256);
+				read128(area, addr + 3072 + 128); read128(area,  addr + 3072 + 512 + 128);
+				read128(area, addr + 3072 + 384); read128(area,  addr + 3072 + 512 + 384);
+				read128(area, addr + 3072 + 320); read128(area,  addr + 3072 + 512 + 320);
+				read128(area, addr + 3072 + 64);  read128(area,  addr + 3072 + 512 + 64);
+				read128(area, addr + 3072 + 192); read128(area,  addr + 3072 + 512 + 192);
+				read128(area, addr + 3072 + 448); read128(area,  addr + 3072 + 512 + 448);
 
-				addr1 -= 64;   // @320 mod 512
-				read128(area, addr1);
-				addr2 -= 64;   // @320 mod 512
-				read128(area, addr2);
-
-				addr1 -= 256;  // @64 mod 512
-				read128(area, addr1);
-				addr2 -= 256;  // @64 mod 512
-				read128(area, addr2);
-
-				addr1 += 128;  // @192 mod 512
-				read128(area, addr1);
-				addr2 += 128;  // @192 mod 512
-				read128(area, addr2);
-
-				addr1 += 256;  // @448 mod 512
-				read128(area, addr1);
-				addr2 += 256;  // @448 mod 512
-				read128(area, addr2);
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
 	case 32:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
-				register off_t addr1, addr2;
+			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+				register off_t addr;
 
 				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 512-byte address space is crossed following pseudo-random
+				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
-				 * position and its mirror over the address mask. This ensures
-				 * non-contiguous accesses that prevent any streaming operation
-				 * from being performed.
+				 * position and a next one 512 bytes apart. This guarantees to
+				 * perform non-contiguous accesses that prevent any streaming
+				 * operation from being performed.
 				 */
-				rnd += 0x20200; // that's 257(prime) times 512
+				addr = rnd & mask;
 
-				addr1 = rnd   & mask; // @0 mod 512
-				read256(area, addr1);
-				addr2 = addr1 ^ mask; // @0 mod 512
-				read256(area, addr2);
+				read256(area, addr + 0000 + 0);   read256(area,  addr + 0000 + 512 + 0);
+				read256(area, addr + 0000 + 256); read256(area,  addr + 0000 + 512 + 256);
+				read256(area, addr + 0000 + 128); read256(area,  addr + 0000 + 512 + 128);
+				read256(area, addr + 0000 + 384); read256(area,  addr + 0000 + 512 + 384);
+				read256(area, addr + 0000 + 320); read256(area,  addr + 0000 + 512 + 320);
+				read256(area, addr + 0000 + 64);  read256(area,  addr + 0000 + 512 + 64);
+				read256(area, addr + 0000 + 192); read256(area,  addr + 0000 + 512 + 192);
+				read256(area, addr + 0000 + 448); read256(area,  addr + 0000 + 512 + 448);
 
-				addr1 += 256;  // @256 mod 512
-				read256(area, addr1);
-				addr2 += 256;  // @256 mod 512
-				read256(area, addr2);
+				read256(area, addr + 1024 + 0);   read256(area,  addr + 1024 + 512 + 0);
+				read256(area, addr + 1024 + 256); read256(area,  addr + 1024 + 512 + 256);
+				read256(area, addr + 1024 + 128); read256(area,  addr + 1024 + 512 + 128);
+				read256(area, addr + 1024 + 384); read256(area,  addr + 1024 + 512 + 384);
+				read256(area, addr + 1024 + 320); read256(area,  addr + 1024 + 512 + 320);
+				read256(area, addr + 1024 + 64);  read256(area,  addr + 1024 + 512 + 64);
+				read256(area, addr + 1024 + 192); read256(area,  addr + 1024 + 512 + 192);
+				read256(area, addr + 1024 + 448); read256(area,  addr + 1024 + 512 + 448);
 
-				addr1 -= 128;  // @128 mod 512
-				read256(area, addr1);
-				addr2 -= 128;  // @128 mod 512
-				read256(area, addr2);
+				read256(area, addr + 2048 + 0);   read256(area,  addr + 2048 + 512 + 0);
+				read256(area, addr + 2048 + 256); read256(area,  addr + 2048 + 512 + 256);
+				read256(area, addr + 2048 + 128); read256(area,  addr + 2048 + 512 + 128);
+				read256(area, addr + 2048 + 384); read256(area,  addr + 2048 + 512 + 384);
+				read256(area, addr + 2048 + 320); read256(area,  addr + 2048 + 512 + 320);
+				read256(area, addr + 2048 + 64);  read256(area,  addr + 2048 + 512 + 64);
+				read256(area, addr + 2048 + 192); read256(area,  addr + 2048 + 512 + 192);
+				read256(area, addr + 2048 + 448); read256(area,  addr + 2048 + 512 + 448);
 
-				addr1 += 256;  // @384 mod 512
-				read256(area, addr1);
-				addr2 += 256;  // @384 mod 512
-				read256(area, addr2);
+				read256(area, addr + 3072 + 0);   read256(area,  addr + 3072 + 512 + 0);
+				read256(area, addr + 3072 + 256); read256(area,  addr + 3072 + 512 + 256);
+				read256(area, addr + 3072 + 128); read256(area,  addr + 3072 + 512 + 128);
+				read256(area, addr + 3072 + 384); read256(area,  addr + 3072 + 512 + 384);
+				read256(area, addr + 3072 + 320); read256(area,  addr + 3072 + 512 + 320);
+				read256(area, addr + 3072 + 64);  read256(area,  addr + 3072 + 512 + 64);
+				read256(area, addr + 3072 + 192); read256(area,  addr + 3072 + 512 + 192);
+				read256(area, addr + 3072 + 448); read256(area,  addr + 3072 + 512 + 448);
 
-				addr1 -= 64;   // @320 mod 512
-				read256(area, addr1);
-				addr2 -= 64;   // @320 mod 512
-				read256(area, addr2);
-
-				addr1 -= 256;  // @64 mod 512
-				read256(area, addr1);
-				addr2 -= 256;  // @64 mod 512
-				read256(area, addr2);
-
-				addr1 += 128;  // @192 mod 512
-				read256(area, addr1);
-				addr2 += 128;  // @192 mod 512
-				read256(area, addr2);
-
-				addr1 += 256;  // @448 mod 512
-				read256(area, addr1);
-				addr2 += 256;  // @448 mod 512
-				read256(area, addr2);
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
 	case 64:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
-				register off_t addr1, addr2;
+			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+				register off_t addr;
 
 				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 512-byte address space is crossed following pseudo-random
+				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
-				 * position and its mirror over the address mask. This ensures
-				 * non-contiguous accesses that prevent any streaming operation
-				 * from being performed.
+				 * position and a next one 512 bytes apart. This guarantees to
+				 * perform non-contiguous accesses that prevent any streaming
+				 * operation from being performed.
 				 */
-				rnd += 0x20200; // that's 257(prime) times 512
+				addr = rnd & mask;
 
-				addr1 = rnd   & mask; // @0 mod 512
-				read512(area, addr1);
-				addr2 = addr1 ^ mask; // @0 mod 512
-				read512(area, addr2);
+				read512(area, addr + 0000 + 0);   read512(area,  addr + 0000 + 512 + 0);
+				read512(area, addr + 0000 + 256); read512(area,  addr + 0000 + 512 + 256);
+				read512(area, addr + 0000 + 128); read512(area,  addr + 0000 + 512 + 128);
+				read512(area, addr + 0000 + 384); read512(area,  addr + 0000 + 512 + 384);
+				read512(area, addr + 0000 + 320); read512(area,  addr + 0000 + 512 + 320);
+				read512(area, addr + 0000 + 64);  read512(area,  addr + 0000 + 512 + 64);
+				read512(area, addr + 0000 + 192); read512(area,  addr + 0000 + 512 + 192);
+				read512(area, addr + 0000 + 448); read512(area,  addr + 0000 + 512 + 448);
 
-				addr1 += 256;  // @256 mod 512
-				read512(area, addr1);
-				addr2 += 256;  // @256 mod 512
-				read512(area, addr2);
+				read512(area, addr + 1024 + 0);   read512(area,  addr + 1024 + 512 + 0);
+				read512(area, addr + 1024 + 256); read512(area,  addr + 1024 + 512 + 256);
+				read512(area, addr + 1024 + 128); read512(area,  addr + 1024 + 512 + 128);
+				read512(area, addr + 1024 + 384); read512(area,  addr + 1024 + 512 + 384);
+				read512(area, addr + 1024 + 320); read512(area,  addr + 1024 + 512 + 320);
+				read512(area, addr + 1024 + 64);  read512(area,  addr + 1024 + 512 + 64);
+				read512(area, addr + 1024 + 192); read512(area,  addr + 1024 + 512 + 192);
+				read512(area, addr + 1024 + 448); read512(area,  addr + 1024 + 512 + 448);
 
-				addr1 -= 128;  // @128 mod 512
-				read512(area, addr1);
-				addr2 -= 128;  // @128 mod 512
-				read512(area, addr2);
+				read512(area, addr + 2048 + 0);   read512(area,  addr + 2048 + 512 + 0);
+				read512(area, addr + 2048 + 256); read512(area,  addr + 2048 + 512 + 256);
+				read512(area, addr + 2048 + 128); read512(area,  addr + 2048 + 512 + 128);
+				read512(area, addr + 2048 + 384); read512(area,  addr + 2048 + 512 + 384);
+				read512(area, addr + 2048 + 320); read512(area,  addr + 2048 + 512 + 320);
+				read512(area, addr + 2048 + 64);  read512(area,  addr + 2048 + 512 + 64);
+				read512(area, addr + 2048 + 192); read512(area,  addr + 2048 + 512 + 192);
+				read512(area, addr + 2048 + 448); read512(area,  addr + 2048 + 512 + 448);
 
-				addr1 += 256;  // @384 mod 512
-				read512(area, addr1);
-				addr2 += 256;  // @384 mod 512
-				read512(area, addr2);
+				read512(area, addr + 3072 + 0);   read512(area,  addr + 3072 + 512 + 0);
+				read512(area, addr + 3072 + 256); read512(area,  addr + 3072 + 512 + 256);
+				read512(area, addr + 3072 + 128); read512(area,  addr + 3072 + 512 + 128);
+				read512(area, addr + 3072 + 384); read512(area,  addr + 3072 + 512 + 384);
+				read512(area, addr + 3072 + 320); read512(area,  addr + 3072 + 512 + 320);
+				read512(area, addr + 3072 + 64);  read512(area,  addr + 3072 + 512 + 64);
+				read512(area, addr + 3072 + 192); read512(area,  addr + 3072 + 512 + 192);
+				read512(area, addr + 3072 + 448); read512(area,  addr + 3072 + 512 + 448);
 
-				addr1 -= 64;   // @320 mod 512
-				read512(area, addr1);
-				addr2 -= 64;   // @320 mod 512
-				read512(area, addr2);
-
-				addr1 -= 256;  // @64 mod 512
-				read512(area, addr1);
-				addr2 -= 256;  // @64 mod 512
-				read512(area, addr2);
-
-				addr1 += 128;  // @192 mod 512
-				read512(area, addr1);
-				addr2 += 128;  // @192 mod 512
-				read512(area, addr2);
-
-				addr1 += 256;  // @448 mod 512
-				read512(area, addr1);
-				addr2 += 256;  // @448 mod 512
-				read512(area, addr2);
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
