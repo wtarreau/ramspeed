@@ -550,7 +550,9 @@ int main(int argc, char **argv)
 	if (argc > 2)
 		size_max = atol(argv[2]) * 1024;
 
-	area = malloc(size_max);
+	area = malloc(size_max + 511);
+	if ((off_t)area & 511)
+		area = (void *)(((off_t)area | 511) + 1);
 
 	if (slowstart) {
 		set_alarm(500000);
