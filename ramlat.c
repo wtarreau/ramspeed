@@ -515,9 +515,18 @@ int main(int argc, char **argv)
 	size_t size, size_max;
 	void *area;
 	unsigned int ret, word;
+	int ptr_only = 0;
 
 	usec = 100000;
 	size_max = 1048576;
+
+	while (argc > 1 && *argv[1] == '-') {
+		if (strcmp(argv[1], "-p") == 0) {
+			ptr_only = 1;
+		}
+		argc--;
+		argv++;
+	}
 
 	if (argc > 1)
 		usec = atoi(argv[1]) * 1000;
@@ -527,14 +536,24 @@ int main(int argc, char **argv)
 
 	area = malloc(size_max);
 
-	printf("   size:     4B     8B    16B    32B    64B\n");
-	for (size = 1024; size <= size_max; size *= 2) {
-		printf("%6uk: ", (unsigned int)(size >> 10U));
-		for (word = 4; word <= 64; word *= 2) {
-			ret = random_read_over_area(area, usec, size, word);
-			printf("%6u ", ret);
+	if (ptr_only) {
+		printf("   size:  void*(%d bits)\n", sizeof(void*) * 8);
+		for (size = 1024; size <= size_max; size *= 2) {
+			printf("%6uk: ", (unsigned int)(size >> 10U));
+			ret = random_read_over_area(area, usec, size, sizeof(void *));
+			printf("%6u\n", ret);
 		}
-		printf("\n");
+	}
+	else {
+		printf("   size:     4B     8B    16B    32B    64B\n");
+		for (size = 1024; size <= size_max; size *= 2) {
+			printf("%6uk: ", (unsigned int)(size >> 10U));
+			for (word = 4; word <= 64; word *= 2) {
+				ret = random_read_over_area(area, usec, size, word);
+				printf("%6u ", ret);
+			}
+			printf("\n");
+		}
 	}
 	exit(0);
 }
