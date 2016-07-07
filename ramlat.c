@@ -516,6 +516,7 @@ int main(int argc, char **argv)
 	void *area;
 	unsigned int ret, word;
 	int ptr_only = 0;
+	int quiet = 0;
 
 	usec = 100000;
 	size_max = 1048576;
@@ -523,6 +524,9 @@ int main(int argc, char **argv)
 	while (argc > 1 && *argv[1] == '-') {
 		if (strcmp(argv[1], "-p") == 0) {
 			ptr_only = 1;
+		}
+		else if (strcmp(argv[1], "-q") == 0) {
+			quiet = 1;
 		}
 		argc--;
 		argv++;
@@ -537,17 +541,21 @@ int main(int argc, char **argv)
 	area = malloc(size_max);
 
 	if (ptr_only) {
-		printf("   size:  void*(%d bits)\n", sizeof(void*) * 8);
+		if (!quiet)
+			printf("   size:  void*(%d bits)\n", sizeof(void*) * 8);
+
 		for (size = 1024; size <= size_max; size *= 2) {
-			printf("%6uk: ", (unsigned int)(size >> 10U));
+			printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 			ret = random_read_over_area(area, usec, size, sizeof(void *));
 			printf("%6u\n", ret);
 		}
 	}
 	else {
-		printf("   size:     4B     8B    16B    32B    64B\n");
+		if (!quiet)
+			printf("   size:     4B     8B    16B    32B    64B\n");
+
 		for (size = 1024; size <= size_max; size *= 2) {
-			printf("%6uk: ", (unsigned int)(size >> 10U));
+			printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 			for (word = 4; word <= 64; word *= 2) {
 				ret = random_read_over_area(area, usec, size, word);
 				printf("%6u ", ret);
