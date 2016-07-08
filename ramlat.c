@@ -550,9 +550,9 @@ int main(int argc, char **argv)
 	if (argc > 2)
 		size_max = atol(argv[2]) * 1024;
 
-	area = malloc(size_max + 511);
-	if ((off_t)area & 511)
-		area = (void *)(((off_t)area | 511) + 1);
+	area = malloc(size_max + 4096);
+	if ((off_t)area & 4095)
+		area = (void *)(((off_t)area | 4095) + 1);
 
 	if (slowstart) {
 		set_alarm(500000);
@@ -575,7 +575,7 @@ int main(int argc, char **argv)
 		if (!quiet)
 			printf("   size:     4B     8B    16B    32B    64B\n");
 
-		for (size = 1024; size <= size_max; size *= 2) {
+		for (size = 4096; size <= size_max; size *= 2) {
 			printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 			for (word = 4; word <= 64; word *= 2) {
 				ret = random_read_over_area(area, usec, size, word);
