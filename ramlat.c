@@ -667,12 +667,12 @@ int main(int argc, char **argv)
 
 	if (ptr_only) {
 		if (!quiet)
-			printf("   size:  void*(%d bits)\n", sizeof(void*) * 8);
+			printf("   size:  void*(%d bits)\n", (int)sizeof(void*) * 8);
 
 		for (size = 1024; size <= size_max; size *= 2) {
 			printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 			ret = random_read_over_area(area, usec, size, sizeof(void *));
-			printf("%6u\n", bw ? ret * sizeof(void *) : ret);
+			printf("%6u\n", bw ? ret * (int)sizeof(void *) : ret);
 		}
 	}
 	else {
