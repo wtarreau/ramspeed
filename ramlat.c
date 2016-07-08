@@ -15,7 +15,7 @@
 #define LOOPS_PER_ROUND 65536
 
 /* set once the end is reached, reset when setting an alarm */
-volatile static int stop_now;
+static volatile int stop_now;
 
 static inline uint64_t rdtsc()
 {
