@@ -212,7 +212,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 	size_t mask;
 	unsigned int rounds, loop;
 	uint64_t before, after;
-	off_t rnd = 0;
+	size_t rnd = 0;
 
 	mask = mask_rounded_down(size);
 	mask &= -(size_t)4096;
