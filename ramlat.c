@@ -193,7 +193,7 @@ void set_alarm(unsigned int usec)
 static size_t mask_rounded_down(size_t size)
 {
 	size_t mask = size;
-	int shift = 1;
+	unsigned int shift = 1;
 
 	while (shift < 8 * sizeof(mask) && (size = mask >> shift)) {
 		mask |= size;
