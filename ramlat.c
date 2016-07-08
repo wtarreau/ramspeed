@@ -521,7 +521,7 @@ int main(int argc, char **argv)
 	int bw = 0;
 
 	usec = 100000;
-	size_max = 1048576;
+	size_max = 16 * 1048576;
 
 	while (argc > 1 && *argv[1] == '-') {
 		if (strcmp(argv[1], "-p") == 0) {
