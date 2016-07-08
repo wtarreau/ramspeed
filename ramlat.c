@@ -237,6 +237,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = rnd & mask;
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read8_dual(area, addr + 0000 + 0,   addr + 0000 + 512 + 0);
 				read8_dual(area, addr + 0000 + 256, addr + 0000 + 512 + 256);
@@ -273,8 +274,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				read8_dual(area, addr + 3072 + 64,  addr + 3072 + 512 + 64);
 				read8_dual(area, addr + 3072 + 192, addr + 3072 + 512 + 192);
 				read8_dual(area, addr + 3072 + 448, addr + 3072 + 512 + 448);
-
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
@@ -291,6 +290,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = rnd & mask;
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read16_dual(area, addr + 0000 + 0,   addr + 0000 + 512 + 0);
 				read16_dual(area, addr + 0000 + 256, addr + 0000 + 512 + 256);
@@ -327,8 +327,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				read16_dual(area, addr + 3072 + 64,  addr + 3072 + 512 + 64);
 				read16_dual(area, addr + 3072 + 192, addr + 3072 + 512 + 192);
 				read16_dual(area, addr + 3072 + 448, addr + 3072 + 512 + 448);
-
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
@@ -345,6 +343,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = rnd & mask;
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read32_dual(area, addr + 0000 + 0,   addr + 0000 + 512 + 0);
 				read32_dual(area, addr + 0000 + 256, addr + 0000 + 512 + 256);
@@ -381,8 +380,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				read32_dual(area, addr + 3072 + 64,  addr + 3072 + 512 + 64);
 				read32_dual(area, addr + 3072 + 192, addr + 3072 + 512 + 192);
 				read32_dual(area, addr + 3072 + 448, addr + 3072 + 512 + 448);
-
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
@@ -399,6 +396,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = rnd & mask;
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read64_dual(area, addr + 0000 + 0,   addr + 0000 + 512 + 0);
 				read64_dual(area, addr + 0000 + 256, addr + 0000 + 512 + 256);
@@ -435,8 +433,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				read64_dual(area, addr + 3072 + 64,  addr + 3072 + 512 + 64);
 				read64_dual(area, addr + 3072 + 192, addr + 3072 + 512 + 192);
 				read64_dual(area, addr + 3072 + 448, addr + 3072 + 512 + 448);
-
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
@@ -454,6 +450,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = rnd & mask;
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read128(area, addr + 0000 + 0);   read128(area,  addr + 0000 + 512 + 0);
 				read128(area, addr + 0000 + 256); read128(area,  addr + 0000 + 512 + 256);
@@ -490,8 +487,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				read128(area, addr + 3072 + 64);  read128(area,  addr + 3072 + 512 + 64);
 				read128(area, addr + 3072 + 192); read128(area,  addr + 3072 + 512 + 192);
 				read128(area, addr + 3072 + 448); read128(area,  addr + 3072 + 512 + 448);
-
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
@@ -508,6 +503,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = rnd & mask;
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read256(area, addr + 0000 + 0);   read256(area,  addr + 0000 + 512 + 0);
 				read256(area, addr + 0000 + 256); read256(area,  addr + 0000 + 512 + 256);
@@ -544,8 +540,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				read256(area, addr + 3072 + 64);  read256(area,  addr + 3072 + 512 + 64);
 				read256(area, addr + 3072 + 192); read256(area,  addr + 3072 + 512 + 192);
 				read256(area, addr + 3072 + 448); read256(area,  addr + 3072 + 512 + 448);
-
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
@@ -562,6 +556,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = rnd & mask;
+				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read512(area, addr + 0000 + 0);   read512(area,  addr + 0000 + 512 + 0);
 				read512(area, addr + 0000 + 256); read512(area,  addr + 0000 + 512 + 256);
@@ -598,8 +593,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				read512(area, addr + 3072 + 64);  read512(area,  addr + 3072 + 512 + 64);
 				read512(area, addr + 3072 + 192); read512(area,  addr + 3072 + 512 + 192);
 				read512(area, addr + 3072 + 448); read512(area,  addr + 3072 + 512 + 448);
-
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 			}
 		}
 		break;
