@@ -1,0 +1,12 @@
+# gnuplot script to graph the output of bogolocs.sh
+set grid
+set key autotitle columnhead
+set ytics 500
+set ylabel "Transaction rate (M/s)"  
+set xlabel "Area size"            
+set xtics rotate
+set xtics offset 2
+#set xrange [-0.1:3.5]
+set boxwidth 0.2 relative
+set style fill solid 0.8 noborder
+plot "data/graph-2ptr-x86.txt" using ($0+0.00):2:xtic(1) with boxes, "" using ($0+0.2):3 with boxes, "" using ($0+0.4):4 with boxes, "" using ($0+0.6):5 with boxes
