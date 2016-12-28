@@ -272,7 +272,7 @@ static size_t mask_rounded_down(size_t size)
 unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, size_t word)
 {
 	size_t mask;
-	unsigned int rounds, loop;
+	unsigned int rounds;
 	uint64_t before, after;
 	size_t rnd = 0;
 	const char *addr;
@@ -290,7 +290,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 	switch (word) {
 	case 1:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
 				/* Walk following a pseudo-random pattern and limit redundancy.
 				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
@@ -299,7 +299,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = area + (rnd & mask);
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read8_dual(addr + 0000,   0, 512 +   0);
 				read8_dual(addr + 0000, 256, 512 + 256);
@@ -341,7 +340,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 		break;
 	case 2:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
 				/* Walk following a pseudo-random pattern and limit redundancy.
 				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
@@ -350,7 +349,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = area + (rnd & mask);
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read16_dual(addr + 0000,   0, 512 +   0);
 				read16_dual(addr + 0000, 256, 512 + 256);
@@ -392,7 +390,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 		break;
 	case 4:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
 				/* Walk following a pseudo-random pattern and limit redundancy.
 				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
@@ -401,7 +399,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = area + (rnd & mask);
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read32_dual(addr + 0000,   0, 512 +   0);
 				read32_dual(addr + 0000, 256, 512 + 256);
@@ -443,7 +440,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 		break;
 	case 8: {
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
 				/* Walk following a pseudo-random pattern and limit redundancy.
 				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
@@ -452,7 +449,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = area + (rnd & mask);
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read64_dual(addr + 0000,   0, 512 +   0);
 				read64_dual(addr + 0000, 256, 512 + 256);
@@ -495,7 +491,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 	}
 	case 16:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
 				/* Walk following a pseudo-random pattern and limit redundancy.
 				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
@@ -504,7 +500,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = area + (rnd & mask);
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read128(addr + 0000,   0); read128(addr + 0000, 512 +   0);
 				read128(addr + 0000, 256); read128(addr + 0000, 512 + 256);
@@ -546,7 +541,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 		break;
 	case 32:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
 				/* Walk following a pseudo-random pattern and limit redundancy.
 				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
@@ -555,7 +550,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = area + (rnd & mask);
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read256(addr + 0000,   0); read256(addr + 0000, 512 +   0);
 				read256(addr + 0000, 256); read256(addr + 0000, 512 + 256);
@@ -597,7 +591,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 		break;
 	case 64:
 		for (rounds = 0; !stop_now; rounds++) {
-			for (loop = 0; loop < LOOPS_PER_ROUND; loop += 64) {
+			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
 				/* Walk following a pseudo-random pattern and limit redundancy.
 				 * A 4096-byte address space is crossed following pseudo-random
 				 * moves within 64 byte locations and for each we test both the
@@ -606,7 +600,6 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * operation from being performed.
 				 */
 				addr = area + (rnd & mask);
-				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
 				read512(addr + 0000,   0); read512(addr + 0000, 512 +   0);
 				read512(addr + 0000, 256); read512(addr + 0000, 512 + 256);
