@@ -1,4 +1,4 @@
-#ifdef __SSE2__
+#ifdef __SSE4_1__
 #include <x86intrin.h>
 #endif
 
@@ -99,7 +99,7 @@ static inline void read64(const char *addr)
 /* same with two addresses at once */
 static inline void read64_dual(const char *addr1, const char *addr2)
 {
-#ifdef __SSE2__
+#ifdef __SSE4_1__
 	__m128i xmm0, xmm1;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
 	             "0" (_mm_loadl_epi64((void *)addr1)),
@@ -126,7 +126,7 @@ static inline void read64_dual(const char *addr1, const char *addr2)
  */
 static inline void read128(const char *addr)
 {
-#ifdef __SSE2__
+#ifdef __SSE4_1__
 	__m128i xmm0;
 	asm volatile("" : "=xm" (xmm0) : "0" (_mm_load_si128((void *)addr)));
 #else
@@ -148,7 +148,7 @@ static inline void read128(const char *addr)
  */
 static inline void read256(const char *addr)
 {
-#ifdef __SSE2__
+#ifdef __SSE4_1__
 	__m128i xmm0, xmm1;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
 	             "0" (_mm_load_si128((void *)addr)),
@@ -172,7 +172,7 @@ static inline void read256(const char *addr)
  */
 static inline void read512(const char *addr)
 {
-#ifdef __SSE2__
+#ifdef __SSE4_1__
 	__m128i xmm0, xmm1, xmm2, xmm3;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
 	             "0" (_mm_load_si128((void *)addr)),
