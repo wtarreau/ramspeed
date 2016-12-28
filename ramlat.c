@@ -242,6 +242,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 
 	mask = mask_rounded_down(size);
 	mask &= -(size_t)4096;
+	addr = area;
 
 	memset(area, 0, size);//mask + 1);
 	rounds = 0;
@@ -260,44 +261,48 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * perform non-contiguous accesses that prevent any streaming
 				 * operation from being performed.
 				 */
-				addr = area + (rnd & mask);
 				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
-				read8_dual(addr, 0000 + 0,   0000 + 512 + 0);
-				read8_dual(addr, 0000 + 256, 0000 + 512 + 256);
-				read8_dual(addr, 0000 + 128, 0000 + 512 + 128);
-				read8_dual(addr, 0000 + 384, 0000 + 512 + 384);
-				read8_dual(addr, 0000 + 320, 0000 + 512 + 320);
-				read8_dual(addr, 0000 + 64,  0000 + 512 + 64);
-				read8_dual(addr, 0000 + 192, 0000 + 512 + 192);
-				read8_dual(addr, 0000 + 448, 0000 + 512 + 448);
+				read8_dual(addr,   0, 512 +   0);
+				read8_dual(addr, 256, 512 + 256);
+				read8_dual(addr, 128, 512 + 128);
+				read8_dual(addr, 384, 512 + 384);
+				read8_dual(addr, 320, 512 + 320);
+				read8_dual(addr,  64, 512 +  64);
+				read8_dual(addr, 192, 512 + 192);
+				read8_dual(addr, 448, 512 + 448);
 
-				read8_dual(addr, 1024 + 0,   1024 + 512 + 0);
-				read8_dual(addr, 1024 + 256, 1024 + 512 + 256);
-				read8_dual(addr, 1024 + 128, 1024 + 512 + 128);
-				read8_dual(addr, 1024 + 384, 1024 + 512 + 384);
-				read8_dual(addr, 1024 + 320, 1024 + 512 + 320);
-				read8_dual(addr, 1024 + 64,  1024 + 512 + 64);
-				read8_dual(addr, 1024 + 192, 1024 + 512 + 192);
-				read8_dual(addr, 1024 + 448, 1024 + 512 + 448);
+				addr += 1024;
+				read8_dual(addr,   0, 512 +   0);
+				read8_dual(addr, 256, 512 + 256);
+				read8_dual(addr, 128, 512 + 128);
+				read8_dual(addr, 384, 512 + 384);
+				read8_dual(addr, 320, 512 + 320);
+				read8_dual(addr,  64, 512 +  64);
+				read8_dual(addr, 192, 512 + 192);
+				read8_dual(addr, 448, 512 + 448);
 
-				read8_dual(addr, 2048 + 0,   2048 + 512 + 0);
-				read8_dual(addr, 2048 + 256, 2048 + 512 + 256);
-				read8_dual(addr, 2048 + 128, 2048 + 512 + 128);
-				read8_dual(addr, 2048 + 384, 2048 + 512 + 384);
-				read8_dual(addr, 2048 + 320, 2048 + 512 + 320);
-				read8_dual(addr, 2048 + 64,  2048 + 512 + 64);
-				read8_dual(addr, 2048 + 192, 2048 + 512 + 192);
-				read8_dual(addr, 2048 + 448, 2048 + 512 + 448);
+				addr += 1024;
+				read8_dual(addr,   0, 512 +   0);
+				read8_dual(addr, 256, 512 + 256);
+				read8_dual(addr, 128, 512 + 128);
+				read8_dual(addr, 384, 512 + 384);
+				read8_dual(addr, 320, 512 + 320);
+				read8_dual(addr,  64, 512 +  64);
+				read8_dual(addr, 192, 512 + 192);
+				read8_dual(addr, 448, 512 + 448);
 
-				read8_dual(addr, 3072 + 0,   3072 + 512 + 0);
-				read8_dual(addr, 3072 + 256, 3072 + 512 + 256);
-				read8_dual(addr, 3072 + 128, 3072 + 512 + 128);
-				read8_dual(addr, 3072 + 384, 3072 + 512 + 384);
-				read8_dual(addr, 3072 + 320, 3072 + 512 + 320);
-				read8_dual(addr, 3072 + 64,  3072 + 512 + 64);
-				read8_dual(addr, 3072 + 192, 3072 + 512 + 192);
-				read8_dual(addr, 3072 + 448, 3072 + 512 + 448);
+				addr += 1024;
+				read8_dual(addr,   0, 512 +   0);
+				read8_dual(addr, 256, 512 + 256);
+				read8_dual(addr, 128, 512 + 128);
+				read8_dual(addr, 384, 512 + 384);
+				read8_dual(addr, 320, 512 + 320);
+				read8_dual(addr,  64, 512 +  64);
+				read8_dual(addr, 192, 512 + 192);
+				read8_dual(addr, 448, 512 + 448);
+
+				addr = area + (rnd & mask);
 			}
 		}
 		break;
@@ -311,44 +316,48 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * perform non-contiguous accesses that prevent any streaming
 				 * operation from being performed.
 				 */
-				addr = area + (rnd & mask);
 				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
-				read16_dual(addr, 0000 + 0,   0000 + 512 + 0);
-				read16_dual(addr, 0000 + 256, 0000 + 512 + 256);
-				read16_dual(addr, 0000 + 128, 0000 + 512 + 128);
-				read16_dual(addr, 0000 + 384, 0000 + 512 + 384);
-				read16_dual(addr, 0000 + 320, 0000 + 512 + 320);
-				read16_dual(addr, 0000 + 64,  0000 + 512 + 64);
-				read16_dual(addr, 0000 + 192, 0000 + 512 + 192);
-				read16_dual(addr, 0000 + 448, 0000 + 512 + 448);
+				read16_dual(addr,   0, 512 +   0);
+				read16_dual(addr, 256, 512 + 256);
+				read16_dual(addr, 128, 512 + 128);
+				read16_dual(addr, 384, 512 + 384);
+				read16_dual(addr, 320, 512 + 320);
+				read16_dual(addr,  64, 512 +  64);
+				read16_dual(addr, 192, 512 + 192);
+				read16_dual(addr, 448, 512 + 448);
 
-				read16_dual(addr, 1024 + 0,   1024 + 512 + 0);
-				read16_dual(addr, 1024 + 256, 1024 + 512 + 256);
-				read16_dual(addr, 1024 + 128, 1024 + 512 + 128);
-				read16_dual(addr, 1024 + 384, 1024 + 512 + 384);
-				read16_dual(addr, 1024 + 320, 1024 + 512 + 320);
-				read16_dual(addr, 1024 + 64,  1024 + 512 + 64);
-				read16_dual(addr, 1024 + 192, 1024 + 512 + 192);
-				read16_dual(addr, 1024 + 448, 1024 + 512 + 448);
+				addr += 1024;
+				read16_dual(addr,   0, 512 +   0);
+				read16_dual(addr, 256, 512 + 256);
+				read16_dual(addr, 128, 512 + 128);
+				read16_dual(addr, 384, 512 + 384);
+				read16_dual(addr, 320, 512 + 320);
+				read16_dual(addr,  64, 512 +  64);
+				read16_dual(addr, 192, 512 + 192);
+				read16_dual(addr, 448, 512 + 448);
 
-				read16_dual(addr, 2048 + 0,   2048 + 512 + 0);
-				read16_dual(addr, 2048 + 256, 2048 + 512 + 256);
-				read16_dual(addr, 2048 + 128, 2048 + 512 + 128);
-				read16_dual(addr, 2048 + 384, 2048 + 512 + 384);
-				read16_dual(addr, 2048 + 320, 2048 + 512 + 320);
-				read16_dual(addr, 2048 + 64,  2048 + 512 + 64);
-				read16_dual(addr, 2048 + 192, 2048 + 512 + 192);
-				read16_dual(addr, 2048 + 448, 2048 + 512 + 448);
+				addr += 1024;
+				read16_dual(addr,   0, 512 +   0);
+				read16_dual(addr, 256, 512 + 256);
+				read16_dual(addr, 128, 512 + 128);
+				read16_dual(addr, 384, 512 + 384);
+				read16_dual(addr, 320, 512 + 320);
+				read16_dual(addr,  64, 512 +  64);
+				read16_dual(addr, 192, 512 + 192);
+				read16_dual(addr, 448, 512 + 448);
 
-				read16_dual(addr, 3072 + 0,   3072 + 512 + 0);
-				read16_dual(addr, 3072 + 256, 3072 + 512 + 256);
-				read16_dual(addr, 3072 + 128, 3072 + 512 + 128);
-				read16_dual(addr, 3072 + 384, 3072 + 512 + 384);
-				read16_dual(addr, 3072 + 320, 3072 + 512 + 320);
-				read16_dual(addr, 3072 + 64,  3072 + 512 + 64);
-				read16_dual(addr, 3072 + 192, 3072 + 512 + 192);
-				read16_dual(addr, 3072 + 448, 3072 + 512 + 448);
+				addr += 1024;
+				read16_dual(addr,   0, 512 +   0);
+				read16_dual(addr, 256, 512 + 256);
+				read16_dual(addr, 128, 512 + 128);
+				read16_dual(addr, 384, 512 + 384);
+				read16_dual(addr, 320, 512 + 320);
+				read16_dual(addr,  64, 512 +  64);
+				read16_dual(addr, 192, 512 + 192);
+				read16_dual(addr, 448, 512 + 448);
+
+				addr = area + (rnd & mask);
 			}
 		}
 		break;
@@ -362,44 +371,48 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * perform non-contiguous accesses that prevent any streaming
 				 * operation from being performed.
 				 */
-				addr = area + (rnd & mask);
 				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
-				read32_dual(addr, 0000 + 0,   0000 + 512 + 0);
-				read32_dual(addr, 0000 + 256, 0000 + 512 + 256);
-				read32_dual(addr, 0000 + 128, 0000 + 512 + 128);
-				read32_dual(addr, 0000 + 384, 0000 + 512 + 384);
-				read32_dual(addr, 0000 + 320, 0000 + 512 + 320);
-				read32_dual(addr, 0000 + 64,  0000 + 512 + 64);
-				read32_dual(addr, 0000 + 192, 0000 + 512 + 192);
-				read32_dual(addr, 0000 + 448, 0000 + 512 + 448);
+				read32_dual(addr,   0, 512 +   0);
+				read32_dual(addr, 256, 512 + 256);
+				read32_dual(addr, 128, 512 + 128);
+				read32_dual(addr, 384, 512 + 384);
+				read32_dual(addr, 320, 512 + 320);
+				read32_dual(addr,  64, 512 +  64);
+				read32_dual(addr, 192, 512 + 192);
+				read32_dual(addr, 448, 512 + 448);
 
-				read32_dual(addr, 1024 + 0,   1024 + 512 + 0);
-				read32_dual(addr, 1024 + 256, 1024 + 512 + 256);
-				read32_dual(addr, 1024 + 128, 1024 + 512 + 128);
-				read32_dual(addr, 1024 + 384, 1024 + 512 + 384);
-				read32_dual(addr, 1024 + 320, 1024 + 512 + 320);
-				read32_dual(addr, 1024 + 64,  1024 + 512 + 64);
-				read32_dual(addr, 1024 + 192, 1024 + 512 + 192);
-				read32_dual(addr, 1024 + 448, 1024 + 512 + 448);
+				addr += 1024;
+				read32_dual(addr,   0, 512 +   0);
+				read32_dual(addr, 256, 512 + 256);
+				read32_dual(addr, 128, 512 + 128);
+				read32_dual(addr, 384, 512 + 384);
+				read32_dual(addr, 320, 512 + 320);
+				read32_dual(addr,  64, 512 +  64);
+				read32_dual(addr, 192, 512 + 192);
+				read32_dual(addr, 448, 512 + 448);
 
-				read32_dual(addr, 2048 + 0,   2048 + 512 + 0);
-				read32_dual(addr, 2048 + 256, 2048 + 512 + 256);
-				read32_dual(addr, 2048 + 128, 2048 + 512 + 128);
-				read32_dual(addr, 2048 + 384, 2048 + 512 + 384);
-				read32_dual(addr, 2048 + 320, 2048 + 512 + 320);
-				read32_dual(addr, 2048 + 64,  2048 + 512 + 64);
-				read32_dual(addr, 2048 + 192, 2048 + 512 + 192);
-				read32_dual(addr, 2048 + 448, 2048 + 512 + 448);
+				addr += 1024;
+				read32_dual(addr,   0, 512 +   0);
+				read32_dual(addr, 256, 512 + 256);
+				read32_dual(addr, 128, 512 + 128);
+				read32_dual(addr, 384, 512 + 384);
+				read32_dual(addr, 320, 512 + 320);
+				read32_dual(addr,  64, 512 +  64);
+				read32_dual(addr, 192, 512 + 192);
+				read32_dual(addr, 448, 512 + 448);
 
-				read32_dual(addr, 3072 + 0,   3072 + 512 + 0);
-				read32_dual(addr, 3072 + 256, 3072 + 512 + 256);
-				read32_dual(addr, 3072 + 128, 3072 + 512 + 128);
-				read32_dual(addr, 3072 + 384, 3072 + 512 + 384);
-				read32_dual(addr, 3072 + 320, 3072 + 512 + 320);
-				read32_dual(addr, 3072 + 64,  3072 + 512 + 64);
-				read32_dual(addr, 3072 + 192, 3072 + 512 + 192);
-				read32_dual(addr, 3072 + 448, 3072 + 512 + 448);
+				addr += 1024;
+				read32_dual(addr,   0, 512 +   0);
+				read32_dual(addr, 256, 512 + 256);
+				read32_dual(addr, 128, 512 + 128);
+				read32_dual(addr, 384, 512 + 384);
+				read32_dual(addr, 320, 512 + 320);
+				read32_dual(addr,  64, 512 +  64);
+				read32_dual(addr, 192, 512 + 192);
+				read32_dual(addr, 448, 512 + 448);
+
+				addr = area + (rnd & mask);
 			}
 		}
 		break;
@@ -413,44 +426,48 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * perform non-contiguous accesses that prevent any streaming
 				 * operation from being performed.
 				 */
-				addr = area + (rnd & mask);
 				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
-				read64_dual(addr, 0000 + 0,   0000 + 512 + 0);
-				read64_dual(addr, 0000 + 256, 0000 + 512 + 256);
-				read64_dual(addr, 0000 + 128, 0000 + 512 + 128);
-				read64_dual(addr, 0000 + 384, 0000 + 512 + 384);
-				read64_dual(addr, 0000 + 320, 0000 + 512 + 320);
-				read64_dual(addr, 0000 + 64,  0000 + 512 + 64);
-				read64_dual(addr, 0000 + 192, 0000 + 512 + 192);
-				read64_dual(addr, 0000 + 448, 0000 + 512 + 448);
+				read64_dual(addr,   0, 512 +   0);
+				read64_dual(addr, 256, 512 + 256);
+				read64_dual(addr, 128, 512 + 128);
+				read64_dual(addr, 384, 512 + 384);
+				read64_dual(addr, 320, 512 + 320);
+				read64_dual(addr,  64, 512 +  64);
+				read64_dual(addr, 192, 512 + 192);
+				read64_dual(addr, 448, 512 + 448);
 
-				read64_dual(addr, 1024 + 0,   1024 + 512 + 0);
-				read64_dual(addr, 1024 + 256, 1024 + 512 + 256);
-				read64_dual(addr, 1024 + 128, 1024 + 512 + 128);
-				read64_dual(addr, 1024 + 384, 1024 + 512 + 384);
-				read64_dual(addr, 1024 + 320, 1024 + 512 + 320);
-				read64_dual(addr, 1024 + 64,  1024 + 512 + 64);
-				read64_dual(addr, 1024 + 192, 1024 + 512 + 192);
-				read64_dual(addr, 1024 + 448, 1024 + 512 + 448);
+				addr += 1024;
+				read64_dual(addr,   0, 512 +   0);
+				read64_dual(addr, 256, 512 + 256);
+				read64_dual(addr, 128, 512 + 128);
+				read64_dual(addr, 384, 512 + 384);
+				read64_dual(addr, 320, 512 + 320);
+				read64_dual(addr,  64, 512 +  64);
+				read64_dual(addr, 192, 512 + 192);
+				read64_dual(addr, 448, 512 + 448);
 
-				read64_dual(addr, 2048 + 0,   2048 + 512 + 0);
-				read64_dual(addr, 2048 + 256, 2048 + 512 + 256);
-				read64_dual(addr, 2048 + 128, 2048 + 512 + 128);
-				read64_dual(addr, 2048 + 384, 2048 + 512 + 384);
-				read64_dual(addr, 2048 + 320, 2048 + 512 + 320);
-				read64_dual(addr, 2048 + 64,  2048 + 512 + 64);
-				read64_dual(addr, 2048 + 192, 2048 + 512 + 192);
-				read64_dual(addr, 2048 + 448, 2048 + 512 + 448);
+				addr += 1024;
+				read64_dual(addr,   0, 512 +   0);
+				read64_dual(addr, 256, 512 + 256);
+				read64_dual(addr, 128, 512 + 128);
+				read64_dual(addr, 384, 512 + 384);
+				read64_dual(addr, 320, 512 + 320);
+				read64_dual(addr,  64, 512 +  64);
+				read64_dual(addr, 192, 512 + 192);
+				read64_dual(addr, 448, 512 + 448);
 
-				read64_dual(addr, 3072 + 0,   3072 + 512 + 0);
-				read64_dual(addr, 3072 + 256, 3072 + 512 + 256);
-				read64_dual(addr, 3072 + 128, 3072 + 512 + 128);
-				read64_dual(addr, 3072 + 384, 3072 + 512 + 384);
-				read64_dual(addr, 3072 + 320, 3072 + 512 + 320);
-				read64_dual(addr, 3072 + 64,  3072 + 512 + 64);
-				read64_dual(addr, 3072 + 192, 3072 + 512 + 192);
-				read64_dual(addr, 3072 + 448, 3072 + 512 + 448);
+				addr += 1024;
+				read64_dual(addr,   0, 512 +   0);
+				read64_dual(addr, 256, 512 + 256);
+				read64_dual(addr, 128, 512 + 128);
+				read64_dual(addr, 384, 512 + 384);
+				read64_dual(addr, 320, 512 + 320);
+				read64_dual(addr,  64, 512 +  64);
+				read64_dual(addr, 192, 512 + 192);
+				read64_dual(addr, 448, 512 + 448);
+
+				addr = area + (rnd & mask);
 			}
 		}
 		break;
@@ -465,44 +482,48 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * perform non-contiguous accesses that prevent any streaming
 				 * operation from being performed.
 				 */
-				addr = area + (rnd & mask);
 				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
-				read128(addr, 0000 + 0);   read128(addr, 0000 + 512 + 0);
-				read128(addr, 0000 + 256); read128(addr, 0000 + 512 + 256);
-				read128(addr, 0000 + 128); read128(addr, 0000 + 512 + 128);
-				read128(addr, 0000 + 384); read128(addr, 0000 + 512 + 384);
-				read128(addr, 0000 + 320); read128(addr, 0000 + 512 + 320);
-				read128(addr, 0000 + 64);  read128(addr, 0000 + 512 + 64);
-				read128(addr, 0000 + 192); read128(addr, 0000 + 512 + 192);
-				read128(addr, 0000 + 448); read128(addr, 0000 + 512 + 448);
+				read128(addr,   0); read128(addr, 512 +   0);
+				read128(addr, 256); read128(addr, 512 + 256);
+				read128(addr, 128); read128(addr, 512 + 128);
+				read128(addr, 384); read128(addr, 512 + 384);
+				read128(addr, 320); read128(addr, 512 + 320);
+				read128(addr,  64); read128(addr, 512 +  64);
+				read128(addr, 192); read128(addr, 512 + 192);
+				read128(addr, 448); read128(addr, 512 + 448);
 
-				read128(addr, 1024 + 0);   read128(addr, 1024 + 512 + 0);
-				read128(addr, 1024 + 256); read128(addr, 1024 + 512 + 256);
-				read128(addr, 1024 + 128); read128(addr, 1024 + 512 + 128);
-				read128(addr, 1024 + 384); read128(addr, 1024 + 512 + 384);
-				read128(addr, 1024 + 320); read128(addr, 1024 + 512 + 320);
-				read128(addr, 1024 + 64);  read128(addr, 1024 + 512 + 64);
-				read128(addr, 1024 + 192); read128(addr, 1024 + 512 + 192);
-				read128(addr, 1024 + 448); read128(addr, 1024 + 512 + 448);
+				addr += 1024;
+				read128(addr,   0); read128(addr, 512 +   0);
+				read128(addr, 256); read128(addr, 512 + 256);
+				read128(addr, 128); read128(addr, 512 + 128);
+				read128(addr, 384); read128(addr, 512 + 384);
+				read128(addr, 320); read128(addr, 512 + 320);
+				read128(addr,  64); read128(addr, 512 +  64);
+				read128(addr, 192); read128(addr, 512 + 192);
+				read128(addr, 448); read128(addr, 512 + 448);
 
-				read128(addr, 2048 + 0);   read128(addr, 2048 + 512 + 0);
-				read128(addr, 2048 + 256); read128(addr, 2048 + 512 + 256);
-				read128(addr, 2048 + 128); read128(addr, 2048 + 512 + 128);
-				read128(addr, 2048 + 384); read128(addr, 2048 + 512 + 384);
-				read128(addr, 2048 + 320); read128(addr, 2048 + 512 + 320);
-				read128(addr, 2048 + 64);  read128(addr, 2048 + 512 + 64);
-				read128(addr, 2048 + 192); read128(addr, 2048 + 512 + 192);
-				read128(addr, 2048 + 448); read128(addr, 2048 + 512 + 448);
+				addr += 1024;
+				read128(addr,   0); read128(addr, 512 +   0);
+				read128(addr, 256); read128(addr, 512 + 256);
+				read128(addr, 128); read128(addr, 512 + 128);
+				read128(addr, 384); read128(addr, 512 + 384);
+				read128(addr, 320); read128(addr, 512 + 320);
+				read128(addr,  64); read128(addr, 512 +  64);
+				read128(addr, 192); read128(addr, 512 + 192);
+				read128(addr, 448); read128(addr, 512 + 448);
 
-				read128(addr, 3072 + 0);   read128(addr, 3072 + 512 + 0);
-				read128(addr, 3072 + 256); read128(addr, 3072 + 512 + 256);
-				read128(addr, 3072 + 128); read128(addr, 3072 + 512 + 128);
-				read128(addr, 3072 + 384); read128(addr, 3072 + 512 + 384);
-				read128(addr, 3072 + 320); read128(addr, 3072 + 512 + 320);
-				read128(addr, 3072 + 64);  read128(addr, 3072 + 512 + 64);
-				read128(addr, 3072 + 192); read128(addr, 3072 + 512 + 192);
-				read128(addr, 3072 + 448); read128(addr, 3072 + 512 + 448);
+				addr += 1024;
+				read128(addr,   0); read128(addr, 512 +   0);
+				read128(addr, 256); read128(addr, 512 + 256);
+				read128(addr, 128); read128(addr, 512 + 128);
+				read128(addr, 384); read128(addr, 512 + 384);
+				read128(addr, 320); read128(addr, 512 + 320);
+				read128(addr,  64); read128(addr, 512 +  64);
+				read128(addr, 192); read128(addr, 512 + 192);
+				read128(addr, 448); read128(addr, 512 + 448);
+
+				addr = area + (rnd & mask);
 			}
 		}
 		break;
@@ -516,44 +537,48 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * perform non-contiguous accesses that prevent any streaming
 				 * operation from being performed.
 				 */
-				addr = area + (rnd & mask);
 				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
-				read256(addr, 0000 + 0);   read256(addr, 0000 + 512 + 0);
-				read256(addr, 0000 + 256); read256(addr, 0000 + 512 + 256);
-				read256(addr, 0000 + 128); read256(addr, 0000 + 512 + 128);
-				read256(addr, 0000 + 384); read256(addr, 0000 + 512 + 384);
-				read256(addr, 0000 + 320); read256(addr, 0000 + 512 + 320);
-				read256(addr, 0000 + 64);  read256(addr, 0000 + 512 + 64);
-				read256(addr, 0000 + 192); read256(addr, 0000 + 512 + 192);
-				read256(addr, 0000 + 448); read256(addr, 0000 + 512 + 448);
+				read256(addr,   0); read256(addr, 512 +   0);
+				read256(addr, 256); read256(addr, 512 + 256);
+				read256(addr, 128); read256(addr, 512 + 128);
+				read256(addr, 384); read256(addr, 512 + 384);
+				read256(addr, 320); read256(addr, 512 + 320);
+				read256(addr,  64); read256(addr, 512 +  64);
+				read256(addr, 192); read256(addr, 512 + 192);
+				read256(addr, 448); read256(addr, 512 + 448);
 
-				read256(addr, 1024 + 0);   read256(addr, 1024 + 512 + 0);
-				read256(addr, 1024 + 256); read256(addr, 1024 + 512 + 256);
-				read256(addr, 1024 + 128); read256(addr, 1024 + 512 + 128);
-				read256(addr, 1024 + 384); read256(addr, 1024 + 512 + 384);
-				read256(addr, 1024 + 320); read256(addr, 1024 + 512 + 320);
-				read256(addr, 1024 + 64);  read256(addr, 1024 + 512 + 64);
-				read256(addr, 1024 + 192); read256(addr, 1024 + 512 + 192);
-				read256(addr, 1024 + 448); read256(addr, 1024 + 512 + 448);
+				addr += 1024;
+				read256(addr,   0); read256(addr, 512 +   0);
+				read256(addr, 256); read256(addr, 512 + 256);
+				read256(addr, 128); read256(addr, 512 + 128);
+				read256(addr, 384); read256(addr, 512 + 384);
+				read256(addr, 320); read256(addr, 512 + 320);
+				read256(addr,  64); read256(addr, 512 +  64);
+				read256(addr, 192); read256(addr, 512 + 192);
+				read256(addr, 448); read256(addr, 512 + 448);
 
-				read256(addr, 2048 + 0);   read256(addr, 2048 + 512 + 0);
-				read256(addr, 2048 + 256); read256(addr, 2048 + 512 + 256);
-				read256(addr, 2048 + 128); read256(addr, 2048 + 512 + 128);
-				read256(addr, 2048 + 384); read256(addr, 2048 + 512 + 384);
-				read256(addr, 2048 + 320); read256(addr, 2048 + 512 + 320);
-				read256(addr, 2048 + 64);  read256(addr, 2048 + 512 + 64);
-				read256(addr, 2048 + 192); read256(addr, 2048 + 512 + 192);
-				read256(addr, 2048 + 448); read256(addr, 2048 + 512 + 448);
+				addr += 1024;
+				read256(addr,   0); read256(addr, 512 +   0);
+				read256(addr, 256); read256(addr, 512 + 256);
+				read256(addr, 128); read256(addr, 512 + 128);
+				read256(addr, 384); read256(addr, 512 + 384);
+				read256(addr, 320); read256(addr, 512 + 320);
+				read256(addr,  64); read256(addr, 512 +  64);
+				read256(addr, 192); read256(addr, 512 + 192);
+				read256(addr, 448); read256(addr, 512 + 448);
 
-				read256(addr, 3072 + 0);   read256(addr, 3072 + 512 + 0);
-				read256(addr, 3072 + 256); read256(addr, 3072 + 512 + 256);
-				read256(addr, 3072 + 128); read256(addr, 3072 + 512 + 128);
-				read256(addr, 3072 + 384); read256(addr, 3072 + 512 + 384);
-				read256(addr, 3072 + 320); read256(addr, 3072 + 512 + 320);
-				read256(addr, 3072 + 64);  read256(addr, 3072 + 512 + 64);
-				read256(addr, 3072 + 192); read256(addr, 3072 + 512 + 192);
-				read256(addr, 3072 + 448); read256(addr, 3072 + 512 + 448);
+				addr += 1024;
+				read256(addr,   0); read256(addr, 512 +   0);
+				read256(addr, 256); read256(addr, 512 + 256);
+				read256(addr, 128); read256(addr, 512 + 128);
+				read256(addr, 384); read256(addr, 512 + 384);
+				read256(addr, 320); read256(addr, 512 + 320);
+				read256(addr,  64); read256(addr, 512 +  64);
+				read256(addr, 192); read256(addr, 512 + 192);
+				read256(addr, 448); read256(addr, 512 + 448);
+
+				addr = area + (rnd & mask);
 			}
 		}
 		break;
@@ -567,44 +592,48 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 				 * perform non-contiguous accesses that prevent any streaming
 				 * operation from being performed.
 				 */
-				addr = area + (rnd & mask);
 				rnd += 257 * 4096; // 257 is prime, will cover all addresses
 
-				read512(addr, 0000 + 0);   read512(addr, 0000 + 512 + 0);
-				read512(addr, 0000 + 256); read512(addr, 0000 + 512 + 256);
-				read512(addr, 0000 + 128); read512(addr, 0000 + 512 + 128);
-				read512(addr, 0000 + 384); read512(addr, 0000 + 512 + 384);
-				read512(addr, 0000 + 320); read512(addr, 0000 + 512 + 320);
-				read512(addr, 0000 + 64);  read512(addr, 0000 + 512 + 64);
-				read512(addr, 0000 + 192); read512(addr, 0000 + 512 + 192);
-				read512(addr, 0000 + 448); read512(addr, 0000 + 512 + 448);
+				read512(addr,   0); read512(addr, 512 +   0);
+				read512(addr, 256); read512(addr, 512 + 256);
+				read512(addr, 128); read512(addr, 512 + 128);
+				read512(addr, 384); read512(addr, 512 + 384);
+				read512(addr, 320); read512(addr, 512 + 320);
+				read512(addr,  64); read512(addr, 512 +  64);
+				read512(addr, 192); read512(addr, 512 + 192);
+				read512(addr, 448); read512(addr, 512 + 448);
 
-				read512(addr, 1024 + 0);   read512(addr, 1024 + 512 + 0);
-				read512(addr, 1024 + 256); read512(addr, 1024 + 512 + 256);
-				read512(addr, 1024 + 128); read512(addr, 1024 + 512 + 128);
-				read512(addr, 1024 + 384); read512(addr, 1024 + 512 + 384);
-				read512(addr, 1024 + 320); read512(addr, 1024 + 512 + 320);
-				read512(addr, 1024 + 64);  read512(addr, 1024 + 512 + 64);
-				read512(addr, 1024 + 192); read512(addr, 1024 + 512 + 192);
-				read512(addr, 1024 + 448); read512(addr, 1024 + 512 + 448);
+				addr += 1024;
+				read512(addr,   0); read512(addr, 512 +   0);
+				read512(addr, 256); read512(addr, 512 + 256);
+				read512(addr, 128); read512(addr, 512 + 128);
+				read512(addr, 384); read512(addr, 512 + 384);
+				read512(addr, 320); read512(addr, 512 + 320);
+				read512(addr,  64); read512(addr, 512 +  64);
+				read512(addr, 192); read512(addr, 512 + 192);
+				read512(addr, 448); read512(addr, 512 + 448);
 
-				read512(addr, 2048 + 0);   read512(addr, 2048 + 512 + 0);
-				read512(addr, 2048 + 256); read512(addr, 2048 + 512 + 256);
-				read512(addr, 2048 + 128); read512(addr, 2048 + 512 + 128);
-				read512(addr, 2048 + 384); read512(addr, 2048 + 512 + 384);
-				read512(addr, 2048 + 320); read512(addr, 2048 + 512 + 320);
-				read512(addr, 2048 + 64);  read512(addr, 2048 + 512 + 64);
-				read512(addr, 2048 + 192); read512(addr, 2048 + 512 + 192);
-				read512(addr, 2048 + 448); read512(addr, 2048 + 512 + 448);
+				addr += 1024;
+				read512(addr,   0); read512(addr, 512 +   0);
+				read512(addr, 256); read512(addr, 512 + 256);
+				read512(addr, 128); read512(addr, 512 + 128);
+				read512(addr, 384); read512(addr, 512 + 384);
+				read512(addr, 320); read512(addr, 512 + 320);
+				read512(addr,  64); read512(addr, 512 +  64);
+				read512(addr, 192); read512(addr, 512 + 192);
+				read512(addr, 448); read512(addr, 512 + 448);
 
-				read512(addr, 3072 + 0);   read512(addr, 3072 + 512 + 0);
-				read512(addr, 3072 + 256); read512(addr, 3072 + 512 + 256);
-				read512(addr, 3072 + 128); read512(addr, 3072 + 512 + 128);
-				read512(addr, 3072 + 384); read512(addr, 3072 + 512 + 384);
-				read512(addr, 3072 + 320); read512(addr, 3072 + 512 + 320);
-				read512(addr, 3072 + 64);  read512(addr, 3072 + 512 + 64);
-				read512(addr, 3072 + 192); read512(addr, 3072 + 512 + 192);
-				read512(addr, 3072 + 448); read512(addr, 3072 + 512 + 448);
+				addr += 1024;
+				read512(addr,   0); read512(addr, 512 +   0);
+				read512(addr, 256); read512(addr, 512 + 256);
+				read512(addr, 128); read512(addr, 512 + 128);
+				read512(addr, 384); read512(addr, 512 + 384);
+				read512(addr, 320); read512(addr, 512 + 320);
+				read512(addr,  64); read512(addr, 512 +  64);
+				read512(addr, 192); read512(addr, 512 + 192);
+				read512(addr, 448); read512(addr, 512 + 448);
+
+				addr = area + (rnd & mask);
 			}
 		}
 		break;
