@@ -121,7 +121,8 @@ static inline void read128(const char *addr)
 {
 	if (HAS_MANY_REGISTERS) {
 #ifdef __SSE2__
-		asm volatile("" : : "xm" (_mm_load_si128((void *)addr)));
+		__m128i xmm0;
+		asm volatile("" : "=xm" (xmm0) : "0" (_mm_load_si128((void *)addr)));
 #else
 		asm volatile("" : : "r" (*(uint64_t *)addr), "r" (*(uint64_t *)(addr + 8)));
 		// +1.5% on cortex a9, -22% on MIPS, -33% on ARMv5, -21% on A53, -36% on Armada370, -50% on x86_64
@@ -142,9 +143,10 @@ static inline void read256(const char *addr)
 {
 	if (HAS_MANY_REGISTERS) {
 #ifdef __SSE2__
-		asm volatile("" : :
-		             "xm" (_mm_load_si128((void *)addr)),
-		             "xm" (_mm_load_si128((void *)addr + 16)));
+		__m128i xmm0, xmm1;
+		asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
+		             "0" (_mm_load_si128((void *)addr)),
+		             "1" (_mm_load_si128((void *)addr + 16)));
 #else
 		asm volatile("" : : "r" (*(uint64_t *)addr),        "r" (*(uint64_t *)(addr + 8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + 16)), "r" (*(uint64_t *)(addr + 24)));
@@ -165,11 +167,12 @@ static inline void read512(const char *addr)
 {
 	if (HAS_MANY_REGISTERS) {
 #ifdef __SSE2__
-		asm volatile("" : :
-		             "xm" (_mm_load_si128((void *)addr)),
-		             "xm" (_mm_load_si128((void *)addr + 16)),
-		             "xm" (_mm_load_si128((void *)addr + 32)),
-		             "xm" (_mm_load_si128((void *)addr + 48)));
+		__m128i xmm0, xmm1, xmm2, xmm3;
+		asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
+		             "0" (_mm_load_si128((void *)addr)),
+		             "1" (_mm_load_si128((void *)addr + 16)),
+		             "2" (_mm_load_si128((void *)addr + 32)),
+		             "3" (_mm_load_si128((void *)addr + 48)));
 #else
 		asm volatile("" : : "r" (*(uint64_t *)addr),        "r" (*(uint64_t *)(addr + 8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + 16)), "r" (*(uint64_t *)(addr + 24)));
