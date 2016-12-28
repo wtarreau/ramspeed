@@ -686,7 +686,9 @@ int main(int argc, char **argv)
 	}
 	else {
 		if (!quiet)
-			printf("   size:     4B     8B    16B    32B    64B\n");
+			printf("   size:     4B%c    8B%c   16B    32B    64B\n",
+			       (sizeof(void *) == 4) ? '*' : ' ',
+			       (sizeof(void *) == 8) ? '*' : ' ');
 
 		for (size = 4096; size <= size_max; size *= 2) {
 			printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
