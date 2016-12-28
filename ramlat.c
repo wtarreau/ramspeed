@@ -104,6 +104,12 @@ static inline void read64_dual(const char *addr, const unsigned long ofs1, const
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
 	             "0" (_mm_loadl_epi64((void *)(addr + ofs1))),
 	             "1" (_mm_loadl_epi64((void *)(addr + ofs2))));
+#elif defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+	asm volatile("vldr %%d4, [%0,%1]\n\t"
+	             "vldr %%d5, [%0,%2]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs1), "I" (ofs2)
+	             : "%d4", "%d5");
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1)), "r" (*(uint64_t *)(addr + ofs2)));
@@ -123,6 +129,14 @@ static inline void read128(const char *addr, const unsigned long ofs)
 #ifdef __SSE4_1__
 	__m128i xmm0;
 	asm volatile("" : "=xm" (xmm0) : "0" (_mm_load_si128((void *)(addr + ofs))));
+#elif defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+	/* Here the only way to get it done properly is to do it by hand :-( */
+	asm volatile("vldr %%d4, [%0,%1+0]\n\t"
+	             "vldr %%d5, [%0,%1+8]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5");
+
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : :
@@ -146,6 +160,14 @@ static inline void read256(const char *addr, const unsigned long ofs)
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
 	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
 	             "1" (_mm_load_si128((void *)(addr + ofs + 16))));
+#elif defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+	asm volatile("vldr %%d4, [%0,%1]\n\t"
+	             "vldr %%d5, [%0,%1+8]\n\t"
+	             "vldr %%d6, [%0,%1+16]\n\t"
+	             "vldr %%d7, [%0,%1+24]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5", "%d6", "%d7");
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  0)), "r" (*(uint64_t *)(addr + ofs +  8)));
@@ -172,6 +194,21 @@ static inline void read512(const char *addr, const unsigned long ofs)
 	             "1" (_mm_load_si128((void *)(addr + ofs + 16))),
 	             "2" (_mm_load_si128((void *)(addr + ofs + 32))),
 	             "3" (_mm_load_si128((void *)(addr + ofs + 48))));
+#elif defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+	asm volatile("vldr %%d4, [%0,%1]\n\t"
+	             "vldr %%d5, [%0,%1+8]\n\t"
+	             "vldr %%d6, [%0,%1+16]\n\t"
+	             "vldr %%d7, [%0,%1+24]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5", "%d6", "%d7");
+	asm volatile("vldr %%d4, [%0,%1+32]\n\t"
+	             "vldr %%d5, [%0,%1+40]\n\t"
+	             "vldr %%d6, [%0,%1+48]\n\t"
+	             "vldr %%d7, [%0,%1+56]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5", "%d6", "%d7");
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  0)), "r" (*(uint64_t *)(addr + ofs +  8)));
