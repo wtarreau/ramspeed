@@ -1,3 +1,7 @@
+#ifdef __SSE2__
+#include <x86intrin.h>
+#endif
+
 #include <sys/time.h>
 #include <signal.h>
 #include <stdint.h>
@@ -116,10 +120,14 @@ static inline void read64_dual(const char *addr1, const char *addr2)
 static inline void read128(const char *addr)
 {
 	if (HAS_MANY_REGISTERS) {
+#ifdef __SSE2__
+		asm volatile("" : : "xm" (_mm_load_si128((void *)addr)));
+#else
 		asm volatile("" : : "r" (*(uint64_t *)addr), "r" (*(uint64_t *)(addr + 8)));
 		// +1.5% on cortex a9, -22% on MIPS, -33% on ARMv5, -21% on A53, -36% on Armada370, -50% on x86_64
 		//asm volatile("" : : "r" (*(uint32_t *)addr), "r" (*(uint32_t *)(addr + 4)));
 		//asm volatile("" : : "r" (*(uint32_t *)(addr + 8)), "r" (*(uint32_t *)(addr + 12)));
+#endif
 	}
 	else {
 		asm volatile("" : : "r" (*(uint64_t *)addr));
@@ -133,8 +141,14 @@ static inline void read128(const char *addr)
 static inline void read256(const char *addr)
 {
 	if (HAS_MANY_REGISTERS) {
+#ifdef __SSE2__
+		asm volatile("" : :
+		             "xm" (_mm_load_si128((void *)addr)),
+		             "xm" (_mm_load_si128((void *)addr + 16)));
+#else
 		asm volatile("" : : "r" (*(uint64_t *)addr),        "r" (*(uint64_t *)(addr + 8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + 16)), "r" (*(uint64_t *)(addr + 24)));
+#endif
 	}
 	else {
 		asm volatile("" : : "r" (*(uint64_t *)addr));
@@ -150,10 +164,18 @@ static inline void read256(const char *addr)
 static inline void read512(const char *addr)
 {
 	if (HAS_MANY_REGISTERS) {
+#ifdef __SSE2__
+		asm volatile("" : :
+		             "xm" (_mm_load_si128((void *)addr)),
+		             "xm" (_mm_load_si128((void *)addr + 16)),
+		             "xm" (_mm_load_si128((void *)addr + 32)),
+		             "xm" (_mm_load_si128((void *)addr + 48)));
+#else
 		asm volatile("" : : "r" (*(uint64_t *)addr),        "r" (*(uint64_t *)(addr + 8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + 16)), "r" (*(uint64_t *)(addr + 24)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + 32)), "r" (*(uint64_t *)(addr + 40)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + 48)), "r" (*(uint64_t *)(addr + 56)));
+#endif /* __SSE2__ */
 	}
 	else {
 		asm volatile("" : : "r" (*(uint64_t *)addr));
