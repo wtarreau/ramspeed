@@ -152,7 +152,7 @@ static inline void read256(const char *addr)
 	__m128i xmm0, xmm1;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
 	             "0" (_mm_load_si128((void *)addr)),
-	             "1" (_mm_load_si128((void *)addr + 16)));
+	             "1" (_mm_load_si128((void *)(addr + 16))));
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)addr),        "r" (*(uint64_t *)(addr + 8)));
@@ -176,9 +176,9 @@ static inline void read512(const char *addr)
 	__m128i xmm0, xmm1, xmm2, xmm3;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
 	             "0" (_mm_load_si128((void *)addr)),
-	             "1" (_mm_load_si128((void *)addr + 16)),
-	             "2" (_mm_load_si128((void *)addr + 32)),
-	             "3" (_mm_load_si128((void *)addr + 48)));
+	             "1" (_mm_load_si128((void *)(addr + 16))),
+	             "2" (_mm_load_si128((void *)(addr + 32))),
+	             "3" (_mm_load_si128((void *)(addr + 48))));
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)addr),        "r" (*(uint64_t *)(addr + 8)));
