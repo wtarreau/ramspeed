@@ -24,13 +24,6 @@ static volatile int stop_now;
 /* These are the functions to call for word sizes of 2^0 to 2^6 */
 unsigned int (*run[7])(void *area, size_t mask);
 
-static inline uint64_t rdtsc()
-{
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec * 1000000 + tv.tv_usec;
-}
-
 /* reads 8 bits from memory area <area>, offset <off> as efficiently as
  * possible for the current architecture.
  */
@@ -322,41 +315,6 @@ static inline void read512(const char *addr, const unsigned long ofs)
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 56)));
 	}
 #endif /* __SSE2__ */
-}
-
-/* just marks the alarm as received */
-void alarm_handler(int sig)
-{
-	stop_now = 1;
-}
-
-/* sets an alarm to trigger after <usec> microseconds. 0 disables it */
-void set_alarm(unsigned int usec)
-{
-	struct itimerval timer = {
-		.it_value.tv_usec = usec % 1000000,
-		.it_value.tv_sec  = usec / 1000000,
-	};
-
-	if (usec) {
-		stop_now = 0;
-		signal(SIGALRM, alarm_handler);
-		signal(SIGVTALRM, alarm_handler);
-	}
-	setitimer(ITIMER_VIRTUAL, &timer, NULL);
-}
-
-/* returns a mask to cover the nearest lower power of two for <size> */
-static size_t mask_rounded_down(size_t size)
-{
-	size_t mask = size;
-	unsigned int shift = 1;
-
-	while (shift < 8 * sizeof(mask) && (size = mask >> shift)) {
-		mask |= size;
-		shift <<= 1;
-	}
-	return mask >> 1;
 }
 
 /* runs the 8-bit test, returns the number of rounds */
@@ -763,6 +721,49 @@ unsigned int run512_generic(void *area, size_t mask)
 		}
 	}
 	return rounds;
+}
+
+/* returns a timestamp in microseconds */
+static inline uint64_t rdtsc()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec * 1000000 + tv.tv_usec;
+}
+
+/* just marks the alarm as received */
+void alarm_handler(int sig)
+{
+	stop_now = 1;
+}
+
+/* sets an alarm to trigger after <usec> microseconds. 0 disables it */
+void set_alarm(unsigned int usec)
+{
+	struct itimerval timer = {
+		.it_value.tv_usec = usec % 1000000,
+		.it_value.tv_sec  = usec / 1000000,
+	};
+
+	if (usec) {
+		stop_now = 0;
+		signal(SIGALRM, alarm_handler);
+		signal(SIGVTALRM, alarm_handler);
+	}
+	setitimer(ITIMER_VIRTUAL, &timer, NULL);
+}
+
+/* returns a mask to cover the nearest lower power of two for <size> */
+static size_t mask_rounded_down(size_t size)
+{
+	size_t mask = size;
+	unsigned int shift = 1;
+
+	while (shift < 8 * sizeof(mask) && (size = mask >> shift)) {
+		mask |= size;
+		shift <<= 1;
+	}
+	return mask >> 1;
 }
 
 /* Randomly accesses aligned words of size <word> bytes over <size> bytes of
