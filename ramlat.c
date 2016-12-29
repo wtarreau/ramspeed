@@ -972,12 +972,12 @@ static inline void read256_vfp(const char *addr, const unsigned long ofs)
 static inline void read256_dual_vfp(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
 {
 	asm volatile("vldr %%d4, [%0,%1]\n\t"
-	             "vldr %%d5, [%0,%2]\n\t"
-	             "vldr %%d6, [%0,%1+8]\n\t"
-	             "vldr %%d7, [%0,%2+8]\n\t"
-	             "vldr %%d4, [%0,%1+16]\n\t"
-	             "vldr %%d5, [%0,%2+16]\n\t"
-	             "vldr %%d6, [%0,%1+24]\n\t"
+	             "vldr %%d5, [%0,%1+8]\n\t"
+	             "vldr %%d6, [%0,%1+16]\n\t"
+	             "vldr %%d7, [%0,%1+24]\n\t"
+	             "vldr %%d4, [%0,%2]\n\t"
+	             "vldr %%d5, [%0,%2+8]\n\t"
+	             "vldr %%d6, [%0,%2+16]\n\t"
 	             "vldr %%d7, [%0,%2+24]\n\t"
 
 	             : /* no output */
