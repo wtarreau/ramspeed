@@ -641,18 +641,12 @@ unsigned int run128_generic(void *area, size_t mask)
 
 
 #ifdef __SSE4_1__
-static inline void read128_sse(const char *addr, const unsigned long ofs)
-{
-	__m128i xmm0;
-	asm volatile("" : "=xm" (xmm0) : "0" (_mm_load_si128((void *)(addr + ofs))));
-}
-
-static inline void read128_dual_sse(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+static inline void read128_dual_sse(const char *addr, const unsigned long ofs)
 {
 	__m128i xmm0, xmm1;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
-	             "0" (_mm_load_si128((void *)(addr + ofs1))),
-	             "1" (_mm_load_si128((void *)(addr + ofs2))));
+	             "0" (_mm_load_si128((void *)(addr + ofs))),
+	             "1" (_mm_load_si128((void *)(addr + ofs + 512))));
 }
 
 /* runs the 128-bit test, returns the number of rounds */
@@ -673,38 +667,47 @@ unsigned int run128_sse(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read128_dual_sse(addr + 0000,   0, 512 +   0);
-			read128_dual_sse(addr + 0000, 256, 512 + 256);
-			read128_dual_sse(addr + 0000, 128, 512 + 128);
-			read128_dual_sse(addr + 0000, 384, 512 + 384);
-			read128_dual_sse(addr + 0000, 320, 512 + 320);
-			read128_dual_sse(addr + 0000,  64, 512 +  64);
-			read128_dual_sse(addr + 0000, 192, 512 + 192);
-			read128_dual_sse(addr + 0000, 448, 512 + 448);
-			read128_dual_sse(addr + 1024,   0, 512 +   0);
-			read128_dual_sse(addr + 1024, 256, 512 + 256);
-			read128_dual_sse(addr + 1024, 128, 512 + 128);
-			read128_dual_sse(addr + 1024, 384, 512 + 384);
-			read128_dual_sse(addr + 1024, 320, 512 + 320);
-			read128_dual_sse(addr + 1024,  64, 512 +  64);
-			read128_dual_sse(addr + 1024, 192, 512 + 192);
-			read128_dual_sse(addr + 1024, 448, 512 + 448);
-			read128_dual_sse(addr + 2048,   0, 512 +   0);
-			read128_dual_sse(addr + 2048, 256, 512 + 256);
-			read128_dual_sse(addr + 2048, 128, 512 + 128);
-			read128_dual_sse(addr + 2048, 384, 512 + 384);
-			read128_dual_sse(addr + 2048, 320, 512 + 320);
-			read128_dual_sse(addr + 2048,  64, 512 +  64);
-			read128_dual_sse(addr + 2048, 192, 512 + 192);
-			read128_dual_sse(addr + 2048, 448, 512 + 448);
-			read128_dual_sse(addr + 3072,   0, 512 +   0);
-			read128_dual_sse(addr + 3072, 256, 512 + 256);
-			read128_dual_sse(addr + 3072, 128, 512 + 128);
-			read128_dual_sse(addr + 3072, 384, 512 + 384);
-			read128_dual_sse(addr + 3072, 320, 512 + 320);
-			read128_dual_sse(addr + 3072,  64, 512 +  64);
-			read128_dual_sse(addr + 3072, 192, 512 + 192);
-			read128_dual_sse(addr + 3072, 448, 512 + 448);
+			read128_dual_sse(addr,   0);
+			read128_dual_sse(addr, 128);
+			read128_dual_sse(addr, 256);
+			read128_dual_sse(addr, 384);
+			read128_dual_sse(addr,  64);
+			read128_dual_sse(addr, 192);
+			read128_dual_sse(addr, 320);
+			read128_dual_sse(addr, 448);
+
+			addr += 1024;
+
+			read128_dual_sse(addr,   0);
+			read128_dual_sse(addr, 128);
+			read128_dual_sse(addr, 256);
+			read128_dual_sse(addr, 384);
+			read128_dual_sse(addr,  64);
+			read128_dual_sse(addr, 192);
+			read128_dual_sse(addr, 320);
+			read128_dual_sse(addr, 448);
+
+			addr += 1024;
+
+			read128_dual_sse(addr,   0);
+			read128_dual_sse(addr, 128);
+			read128_dual_sse(addr, 256);
+			read128_dual_sse(addr, 384);
+			read128_dual_sse(addr,  64);
+			read128_dual_sse(addr, 192);
+			read128_dual_sse(addr, 320);
+			read128_dual_sse(addr, 448);
+
+			addr += 1024;
+
+			read128_dual_sse(addr,   0);
+			read128_dual_sse(addr, 128);
+			read128_dual_sse(addr, 256);
+			read128_dual_sse(addr, 384);
+			read128_dual_sse(addr,  64);
+			read128_dual_sse(addr, 192);
+			read128_dual_sse(addr, 320);
+			read128_dual_sse(addr, 448);
 		}
 	}
 	return rounds;
