@@ -1141,41 +1141,47 @@ unsigned int run512_generic(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read512(addr + 0000,   0); read512(addr + 0000, 512 +   0);
-			read512(addr + 0000, 256); read512(addr + 0000, 512 + 256);
-			read512(addr + 0000, 128); read512(addr + 0000, 512 + 128);
-			read512(addr + 0000, 384); read512(addr + 0000, 512 + 384);
-			read512(addr + 0000, 320); read512(addr + 0000, 512 + 320);
-			read512(addr + 0000,  64); read512(addr + 0000, 512 +  64);
-			read512(addr + 0000, 192); read512(addr + 0000, 512 + 192);
-			read512(addr + 0000, 448); read512(addr + 0000, 512 + 448);
+			read512(addr,   0); read512(addr, 512 +   0);
+			read512(addr, 128); read512(addr, 512 + 128);
+			read512(addr, 256); read512(addr, 512 + 256);
+			read512(addr, 384); read512(addr, 512 + 384);
+			read512(addr,  64); read512(addr, 512 +  64);
+			read512(addr, 320); read512(addr, 512 + 320);
+			read512(addr, 192); read512(addr, 512 + 192);
+			read512(addr, 448); read512(addr, 512 + 448);
 
-			read512(addr + 1024,   0); read512(addr + 1024, 512 +   0);
-			read512(addr + 1024, 256); read512(addr + 1024, 512 + 256);
-			read512(addr + 1024, 128); read512(addr + 1024, 512 + 128);
-			read512(addr + 1024, 384); read512(addr + 1024, 512 + 384);
-			read512(addr + 1024, 320); read512(addr + 1024, 512 + 320);
-			read512(addr + 1024,  64); read512(addr + 1024, 512 +  64);
-			read512(addr + 1024, 192); read512(addr + 1024, 512 + 192);
-			read512(addr + 1024, 448); read512(addr + 1024, 512 + 448);
+			addr += 1024;
 
-			read512(addr + 2048,   0); read512(addr + 2048, 512 +   0);
-			read512(addr + 2048, 256); read512(addr + 2048, 512 + 256);
-			read512(addr + 2048, 128); read512(addr + 2048, 512 + 128);
-			read512(addr + 2048, 384); read512(addr + 2048, 512 + 384);
-			read512(addr + 2048, 320); read512(addr + 2048, 512 + 320);
-			read512(addr + 2048,  64); read512(addr + 2048, 512 +  64);
-			read512(addr + 2048, 192); read512(addr + 2048, 512 + 192);
-			read512(addr + 2048, 448); read512(addr + 2048, 512 + 448);
+			read512(addr,   0); read512(addr, 512 +   0);
+			read512(addr, 128); read512(addr, 512 + 128);
+			read512(addr, 256); read512(addr, 512 + 256);
+			read512(addr, 384); read512(addr, 512 + 384);
+			read512(addr,  64); read512(addr, 512 +  64);
+			read512(addr, 320); read512(addr, 512 + 320);
+			read512(addr, 192); read512(addr, 512 + 192);
+			read512(addr, 448); read512(addr, 512 + 448);
 
-			read512(addr + 3072,   0); read512(addr + 3072, 512 +   0);
-			read512(addr + 3072, 256); read512(addr + 3072, 512 + 256);
-			read512(addr + 3072, 128); read512(addr + 3072, 512 + 128);
-			read512(addr + 3072, 384); read512(addr + 3072, 512 + 384);
-			read512(addr + 3072, 320); read512(addr + 3072, 512 + 320);
-			read512(addr + 3072,  64); read512(addr + 3072, 512 +  64);
-			read512(addr + 3072, 192); read512(addr + 3072, 512 + 192);
-			read512(addr + 3072, 448); read512(addr + 3072, 512 + 448);
+			addr += 1024;
+
+			read512(addr,   0); read512(addr, 512 +   0);
+			read512(addr, 128); read512(addr, 512 + 128);
+			read512(addr, 256); read512(addr, 512 + 256);
+			read512(addr, 384); read512(addr, 512 + 384);
+			read512(addr,  64); read512(addr, 512 +  64);
+			read512(addr, 320); read512(addr, 512 + 320);
+			read512(addr, 192); read512(addr, 512 + 192);
+			read512(addr, 448); read512(addr, 512 + 448);
+
+			addr += 1024;
+
+			read512(addr,   0); read512(addr, 512 +   0);
+			read512(addr, 128); read512(addr, 512 + 128);
+			read512(addr, 256); read512(addr, 512 + 256);
+			read512(addr, 384); read512(addr, 512 + 384);
+			read512(addr,  64); read512(addr, 512 +  64);
+			read512(addr, 320); read512(addr, 512 + 320);
+			read512(addr, 192); read512(addr, 512 + 192);
+			read512(addr, 448); read512(addr, 512 + 448);
 		}
 	}
 	return rounds;
