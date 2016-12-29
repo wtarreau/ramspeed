@@ -21,6 +21,9 @@
 /* set once the end is reached, reset when setting an alarm */
 static volatile int stop_now;
 
+/* These are the functions to call for word sizes of 2^0 to 2^6 */
+unsigned int (*run[7])(void *area, size_t mask);
+
 static inline uint64_t rdtsc()
 {
 	struct timeval tv;
@@ -356,6 +359,412 @@ static size_t mask_rounded_down(size_t size)
 	return mask >> 1;
 }
 
+/* runs the 8-bit test, returns the number of rounds */
+unsigned int run8_generic(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read8_dual(addr + 0000,   0, 512 +   0);
+			read8_dual(addr + 0000, 256, 512 + 256);
+			read8_dual(addr + 0000, 128, 512 + 128);
+			read8_dual(addr + 0000, 384, 512 + 384);
+			read8_dual(addr + 0000, 320, 512 + 320);
+			read8_dual(addr + 0000,  64, 512 +  64);
+			read8_dual(addr + 0000, 192, 512 + 192);
+			read8_dual(addr + 0000, 448, 512 + 448);
+
+			read8_dual(addr + 1024,   0, 512 +   0);
+			read8_dual(addr + 1024, 256, 512 + 256);
+			read8_dual(addr + 1024, 128, 512 + 128);
+			read8_dual(addr + 1024, 384, 512 + 384);
+			read8_dual(addr + 1024, 320, 512 + 320);
+			read8_dual(addr + 1024,  64, 512 +  64);
+			read8_dual(addr + 1024, 192, 512 + 192);
+			read8_dual(addr + 1024, 448, 512 + 448);
+
+			read8_dual(addr + 2048,   0, 512 +   0);
+			read8_dual(addr + 2048, 256, 512 + 256);
+			read8_dual(addr + 2048, 128, 512 + 128);
+			read8_dual(addr + 2048, 384, 512 + 384);
+			read8_dual(addr + 2048, 320, 512 + 320);
+			read8_dual(addr + 2048,  64, 512 +  64);
+			read8_dual(addr + 2048, 192, 512 + 192);
+			read8_dual(addr + 2048, 448, 512 + 448);
+
+			read8_dual(addr + 3072,   0, 512 +   0);
+			read8_dual(addr + 3072, 256, 512 + 256);
+			read8_dual(addr + 3072, 128, 512 + 128);
+			read8_dual(addr + 3072, 384, 512 + 384);
+			read8_dual(addr + 3072, 320, 512 + 320);
+			read8_dual(addr + 3072,  64, 512 +  64);
+			read8_dual(addr + 3072, 192, 512 + 192);
+			read8_dual(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+
+/* runs the 16-bit test, returns the number of rounds */
+unsigned int run16_generic(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read16_dual(addr + 0000,   0, 512 +   0);
+			read16_dual(addr + 0000, 256, 512 + 256);
+			read16_dual(addr + 0000, 128, 512 + 128);
+			read16_dual(addr + 0000, 384, 512 + 384);
+			read16_dual(addr + 0000, 320, 512 + 320);
+			read16_dual(addr + 0000,  64, 512 +  64);
+			read16_dual(addr + 0000, 192, 512 + 192);
+			read16_dual(addr + 0000, 448, 512 + 448);
+
+			read16_dual(addr + 1024,   0, 512 +   0);
+			read16_dual(addr + 1024, 256, 512 + 256);
+			read16_dual(addr + 1024, 128, 512 + 128);
+			read16_dual(addr + 1024, 384, 512 + 384);
+			read16_dual(addr + 1024, 320, 512 + 320);
+			read16_dual(addr + 1024,  64, 512 +  64);
+			read16_dual(addr + 1024, 192, 512 + 192);
+			read16_dual(addr + 1024, 448, 512 + 448);
+
+			read16_dual(addr + 2048,   0, 512 +   0);
+			read16_dual(addr + 2048, 256, 512 + 256);
+			read16_dual(addr + 2048, 128, 512 + 128);
+			read16_dual(addr + 2048, 384, 512 + 384);
+			read16_dual(addr + 2048, 320, 512 + 320);
+			read16_dual(addr + 2048,  64, 512 +  64);
+			read16_dual(addr + 2048, 192, 512 + 192);
+			read16_dual(addr + 2048, 448, 512 + 448);
+
+			read16_dual(addr + 3072,   0, 512 +   0);
+			read16_dual(addr + 3072, 256, 512 + 256);
+			read16_dual(addr + 3072, 128, 512 + 128);
+			read16_dual(addr + 3072, 384, 512 + 384);
+			read16_dual(addr + 3072, 320, 512 + 320);
+			read16_dual(addr + 3072,  64, 512 +  64);
+			read16_dual(addr + 3072, 192, 512 + 192);
+			read16_dual(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+
+/* runs the 32-bit test, returns the number of rounds */
+unsigned int run32_generic(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read32_dual(addr + 0000,   0, 512 +   0);
+			read32_dual(addr + 0000, 256, 512 + 256);
+			read32_dual(addr + 0000, 128, 512 + 128);
+			read32_dual(addr + 0000, 384, 512 + 384);
+			read32_dual(addr + 0000, 320, 512 + 320);
+			read32_dual(addr + 0000,  64, 512 +  64);
+			read32_dual(addr + 0000, 192, 512 + 192);
+			read32_dual(addr + 0000, 448, 512 + 448);
+
+			read32_dual(addr + 1024,   0, 512 +   0);
+			read32_dual(addr + 1024, 256, 512 + 256);
+			read32_dual(addr + 1024, 128, 512 + 128);
+			read32_dual(addr + 1024, 384, 512 + 384);
+			read32_dual(addr + 1024, 320, 512 + 320);
+			read32_dual(addr + 1024,  64, 512 +  64);
+			read32_dual(addr + 1024, 192, 512 + 192);
+			read32_dual(addr + 1024, 448, 512 + 448);
+
+			read32_dual(addr + 2048,   0, 512 +   0);
+			read32_dual(addr + 2048, 256, 512 + 256);
+			read32_dual(addr + 2048, 128, 512 + 128);
+			read32_dual(addr + 2048, 384, 512 + 384);
+			read32_dual(addr + 2048, 320, 512 + 320);
+			read32_dual(addr + 2048,  64, 512 +  64);
+			read32_dual(addr + 2048, 192, 512 + 192);
+			read32_dual(addr + 2048, 448, 512 + 448);
+
+			read32_dual(addr + 3072,   0, 512 +   0);
+			read32_dual(addr + 3072, 256, 512 + 256);
+			read32_dual(addr + 3072, 128, 512 + 128);
+			read32_dual(addr + 3072, 384, 512 + 384);
+			read32_dual(addr + 3072, 320, 512 + 320);
+			read32_dual(addr + 3072,  64, 512 +  64);
+			read32_dual(addr + 3072, 192, 512 + 192);
+			read32_dual(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+
+/* runs the 64-bit test, returns the number of rounds */
+unsigned int run64_generic(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read64_dual(addr + 0000,   0, 512 +   0);
+			read64_dual(addr + 0000, 256, 512 + 256);
+			read64_dual(addr + 0000, 128, 512 + 128);
+			read64_dual(addr + 0000, 384, 512 + 384);
+			read64_dual(addr + 0000, 320, 512 + 320);
+			read64_dual(addr + 0000,  64, 512 +  64);
+			read64_dual(addr + 0000, 192, 512 + 192);
+			read64_dual(addr + 0000, 448, 512 + 448);
+
+			read64_dual(addr + 1024,   0, 512 +   0);
+			read64_dual(addr + 1024, 256, 512 + 256);
+			read64_dual(addr + 1024, 128, 512 + 128);
+			read64_dual(addr + 1024, 384, 512 + 384);
+			read64_dual(addr + 1024, 320, 512 + 320);
+			read64_dual(addr + 1024,  64, 512 +  64);
+			read64_dual(addr + 1024, 192, 512 + 192);
+			read64_dual(addr + 1024, 448, 512 + 448);
+
+			read64_dual(addr + 2048,   0, 512 +   0);
+			read64_dual(addr + 2048, 256, 512 + 256);
+			read64_dual(addr + 2048, 128, 512 + 128);
+			read64_dual(addr + 2048, 384, 512 + 384);
+			read64_dual(addr + 2048, 320, 512 + 320);
+			read64_dual(addr + 2048,  64, 512 +  64);
+			read64_dual(addr + 2048, 192, 512 + 192);
+			read64_dual(addr + 2048, 448, 512 + 448);
+
+			read64_dual(addr + 3072,   0, 512 +   0);
+			read64_dual(addr + 3072, 256, 512 + 256);
+			read64_dual(addr + 3072, 128, 512 + 128);
+			read64_dual(addr + 3072, 384, 512 + 384);
+			read64_dual(addr + 3072, 320, 512 + 320);
+			read64_dual(addr + 3072,  64, 512 +  64);
+			read64_dual(addr + 3072, 192, 512 + 192);
+			read64_dual(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+
+/* runs the 128-bit test, returns the number of rounds */
+unsigned int run128_generic(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read128_dual(addr + 0000,   0, 512 +   0);
+			read128_dual(addr + 0000, 256, 512 + 256);
+			read128_dual(addr + 0000, 128, 512 + 128);
+			read128_dual(addr + 0000, 384, 512 + 384);
+			read128_dual(addr + 0000, 320, 512 + 320);
+			read128_dual(addr + 0000,  64, 512 +  64);
+			read128_dual(addr + 0000, 192, 512 + 192);
+			read128_dual(addr + 0000, 448, 512 + 448);
+
+			read128_dual(addr + 1024,   0, 512 +   0);
+			read128_dual(addr + 1024, 256, 512 + 256);
+			read128_dual(addr + 1024, 128, 512 + 128);
+			read128_dual(addr + 1024, 384, 512 + 384);
+			read128_dual(addr + 1024, 320, 512 + 320);
+			read128_dual(addr + 1024,  64, 512 +  64);
+			read128_dual(addr + 1024, 192, 512 + 192);
+			read128_dual(addr + 1024, 448, 512 + 448);
+
+			read128_dual(addr + 2048,   0, 512 +   0);
+			read128_dual(addr + 2048, 256, 512 + 256);
+			read128_dual(addr + 2048, 128, 512 + 128);
+			read128_dual(addr + 2048, 384, 512 + 384);
+			read128_dual(addr + 2048, 320, 512 + 320);
+			read128_dual(addr + 2048,  64, 512 +  64);
+			read128_dual(addr + 2048, 192, 512 + 192);
+			read128_dual(addr + 2048, 448, 512 + 448);
+
+			read128_dual(addr + 3072,   0, 512 +   0);
+			read128_dual(addr + 3072, 256, 512 + 256);
+			read128_dual(addr + 3072, 128, 512 + 128);
+			read128_dual(addr + 3072, 384, 512 + 384);
+			read128_dual(addr + 3072, 320, 512 + 320);
+			read128_dual(addr + 3072,  64, 512 +  64);
+			read128_dual(addr + 3072, 192, 512 + 192);
+			read128_dual(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+
+/* runs the 256-bit test, returns the number of rounds */
+unsigned int run256_generic(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read256_dual(addr + 0000,   0, 512 +   0);
+			read256_dual(addr + 0000, 256, 512 + 256);
+			read256_dual(addr + 0000, 128, 512 + 128);
+			read256_dual(addr + 0000, 384, 512 + 384);
+			read256_dual(addr + 0000, 320, 512 + 320);
+			read256_dual(addr + 0000,  64, 512 +  64);
+			read256_dual(addr + 0000, 192, 512 + 192);
+			read256_dual(addr + 0000, 448, 512 + 448);
+
+			read256_dual(addr + 1024,   0, 512 +   0);
+			read256_dual(addr + 1024, 256, 512 + 256);
+			read256_dual(addr + 1024, 128, 512 + 128);
+			read256_dual(addr + 1024, 384, 512 + 384);
+			read256_dual(addr + 1024, 320, 512 + 320);
+			read256_dual(addr + 1024,  64, 512 +  64);
+			read256_dual(addr + 1024, 192, 512 + 192);
+			read256_dual(addr + 1024, 448, 512 + 448);
+
+			read256_dual(addr + 2048,   0, 512 +   0);
+			read256_dual(addr + 2048, 256, 512 + 256);
+			read256_dual(addr + 2048, 128, 512 + 128);
+			read256_dual(addr + 2048, 384, 512 + 384);
+			read256_dual(addr + 2048, 320, 512 + 320);
+			read256_dual(addr + 2048,  64, 512 +  64);
+			read256_dual(addr + 2048, 192, 512 + 192);
+			read256_dual(addr + 2048, 448, 512 + 448);
+
+			read256_dual(addr + 3072,   0, 512 +   0);
+			read256_dual(addr + 3072, 256, 512 + 256);
+			read256_dual(addr + 3072, 128, 512 + 128);
+			read256_dual(addr + 3072, 384, 512 + 384);
+			read256_dual(addr + 3072, 320, 512 + 320);
+			read256_dual(addr + 3072,  64, 512 +  64);
+			read256_dual(addr + 3072, 192, 512 + 192);
+			read256_dual(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+
+/* runs the 512-bit test, returns the number of rounds */
+unsigned int run512_generic(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read512(addr + 0000,   0); read512(addr + 0000, 512 +   0);
+			read512(addr + 0000, 256); read512(addr + 0000, 512 + 256);
+			read512(addr + 0000, 128); read512(addr + 0000, 512 + 128);
+			read512(addr + 0000, 384); read512(addr + 0000, 512 + 384);
+			read512(addr + 0000, 320); read512(addr + 0000, 512 + 320);
+			read512(addr + 0000,  64); read512(addr + 0000, 512 +  64);
+			read512(addr + 0000, 192); read512(addr + 0000, 512 + 192);
+			read512(addr + 0000, 448); read512(addr + 0000, 512 + 448);
+
+			read512(addr + 1024,   0); read512(addr + 1024, 512 +   0);
+			read512(addr + 1024, 256); read512(addr + 1024, 512 + 256);
+			read512(addr + 1024, 128); read512(addr + 1024, 512 + 128);
+			read512(addr + 1024, 384); read512(addr + 1024, 512 + 384);
+			read512(addr + 1024, 320); read512(addr + 1024, 512 + 320);
+			read512(addr + 1024,  64); read512(addr + 1024, 512 +  64);
+			read512(addr + 1024, 192); read512(addr + 1024, 512 + 192);
+			read512(addr + 1024, 448); read512(addr + 1024, 512 + 448);
+
+			read512(addr + 2048,   0); read512(addr + 2048, 512 +   0);
+			read512(addr + 2048, 256); read512(addr + 2048, 512 + 256);
+			read512(addr + 2048, 128); read512(addr + 2048, 512 + 128);
+			read512(addr + 2048, 384); read512(addr + 2048, 512 + 384);
+			read512(addr + 2048, 320); read512(addr + 2048, 512 + 320);
+			read512(addr + 2048,  64); read512(addr + 2048, 512 +  64);
+			read512(addr + 2048, 192); read512(addr + 2048, 512 + 192);
+			read512(addr + 2048, 448); read512(addr + 2048, 512 + 448);
+
+			read512(addr + 3072,   0); read512(addr + 3072, 512 +   0);
+			read512(addr + 3072, 256); read512(addr + 3072, 512 + 256);
+			read512(addr + 3072, 128); read512(addr + 3072, 512 + 128);
+			read512(addr + 3072, 384); read512(addr + 3072, 512 + 384);
+			read512(addr + 3072, 320); read512(addr + 3072, 512 + 320);
+			read512(addr + 3072,  64); read512(addr + 3072, 512 +  64);
+			read512(addr + 3072, 192); read512(addr + 3072, 512 + 192);
+			read512(addr + 3072, 448); read512(addr + 3072, 512 + 448);
+		}
+	}
+	return rounds;
+}
+
 /* Randomly accesses aligned words of size <word> bytes over <size> bytes of
  * area <area> for about <usec> microseconds, then returns the number of words
  * read per microsecond. Note: size is rounded down to the lower power of two,
@@ -366,372 +775,27 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 	size_t mask;
 	unsigned int rounds;
 	uint64_t before, after;
-	size_t rnd = 0;
-	const char *addr;
+	int fct;
 
 	mask = mask_rounded_down(size);
 	mask &= -(size_t)4096;
-	addr = area;
 
-	memset(area, 0, size);//mask + 1);
+	memset(area, 0, size);
 	rounds = 0;
+
+	/* find what function to use based on the word size */
+	for (fct = 0; word >>= 1; fct++);
+
+	if (fct >= sizeof(run) / sizeof(*run))
+		return 0;
+
+	if (!run[fct])
+		return 0;
 
 	set_alarm(usec);
 	before = rdtsc();
 
-	switch (word) {
-	case 1:
-		for (rounds = 0; !stop_now; rounds++) {
-			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
-				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 4096-byte address space is crossed following pseudo-random
-				 * moves within 64 byte locations and for each we test both the
-				 * position and a next one 512 bytes apart. This guarantees to
-				 * perform non-contiguous accesses that prevent any streaming
-				 * operation from being performed.
-				 */
-				addr = area + (rnd & mask);
-
-				read8_dual(addr + 0000,   0, 512 +   0);
-				read8_dual(addr + 0000, 256, 512 + 256);
-				read8_dual(addr + 0000, 128, 512 + 128);
-				read8_dual(addr + 0000, 384, 512 + 384);
-				read8_dual(addr + 0000, 320, 512 + 320);
-				read8_dual(addr + 0000,  64, 512 +  64);
-				read8_dual(addr + 0000, 192, 512 + 192);
-				read8_dual(addr + 0000, 448, 512 + 448);
-
-				read8_dual(addr + 1024,   0, 512 +   0);
-				read8_dual(addr + 1024, 256, 512 + 256);
-				read8_dual(addr + 1024, 128, 512 + 128);
-				read8_dual(addr + 1024, 384, 512 + 384);
-				read8_dual(addr + 1024, 320, 512 + 320);
-				read8_dual(addr + 1024,  64, 512 +  64);
-				read8_dual(addr + 1024, 192, 512 + 192);
-				read8_dual(addr + 1024, 448, 512 + 448);
-
-				read8_dual(addr + 2048,   0, 512 +   0);
-				read8_dual(addr + 2048, 256, 512 + 256);
-				read8_dual(addr + 2048, 128, 512 + 128);
-				read8_dual(addr + 2048, 384, 512 + 384);
-				read8_dual(addr + 2048, 320, 512 + 320);
-				read8_dual(addr + 2048,  64, 512 +  64);
-				read8_dual(addr + 2048, 192, 512 + 192);
-				read8_dual(addr + 2048, 448, 512 + 448);
-
-				read8_dual(addr + 3072,   0, 512 +   0);
-				read8_dual(addr + 3072, 256, 512 + 256);
-				read8_dual(addr + 3072, 128, 512 + 128);
-				read8_dual(addr + 3072, 384, 512 + 384);
-				read8_dual(addr + 3072, 320, 512 + 320);
-				read8_dual(addr + 3072,  64, 512 +  64);
-				read8_dual(addr + 3072, 192, 512 + 192);
-				read8_dual(addr + 3072, 448, 512 + 448);
-			}
-		}
-		break;
-	case 2:
-		for (rounds = 0; !stop_now; rounds++) {
-			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
-				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 4096-byte address space is crossed following pseudo-random
-				 * moves within 64 byte locations and for each we test both the
-				 * position and a next one 512 bytes apart. This guarantees to
-				 * perform non-contiguous accesses that prevent any streaming
-				 * operation from being performed.
-				 */
-				addr = area + (rnd & mask);
-
-				read16_dual(addr + 0000,   0, 512 +   0);
-				read16_dual(addr + 0000, 256, 512 + 256);
-				read16_dual(addr + 0000, 128, 512 + 128);
-				read16_dual(addr + 0000, 384, 512 + 384);
-				read16_dual(addr + 0000, 320, 512 + 320);
-				read16_dual(addr + 0000,  64, 512 +  64);
-				read16_dual(addr + 0000, 192, 512 + 192);
-				read16_dual(addr + 0000, 448, 512 + 448);
-
-				read16_dual(addr + 1024,   0, 512 +   0);
-				read16_dual(addr + 1024, 256, 512 + 256);
-				read16_dual(addr + 1024, 128, 512 + 128);
-				read16_dual(addr + 1024, 384, 512 + 384);
-				read16_dual(addr + 1024, 320, 512 + 320);
-				read16_dual(addr + 1024,  64, 512 +  64);
-				read16_dual(addr + 1024, 192, 512 + 192);
-				read16_dual(addr + 1024, 448, 512 + 448);
-
-				read16_dual(addr + 2048,   0, 512 +   0);
-				read16_dual(addr + 2048, 256, 512 + 256);
-				read16_dual(addr + 2048, 128, 512 + 128);
-				read16_dual(addr + 2048, 384, 512 + 384);
-				read16_dual(addr + 2048, 320, 512 + 320);
-				read16_dual(addr + 2048,  64, 512 +  64);
-				read16_dual(addr + 2048, 192, 512 + 192);
-				read16_dual(addr + 2048, 448, 512 + 448);
-
-				read16_dual(addr + 3072,   0, 512 +   0);
-				read16_dual(addr + 3072, 256, 512 + 256);
-				read16_dual(addr + 3072, 128, 512 + 128);
-				read16_dual(addr + 3072, 384, 512 + 384);
-				read16_dual(addr + 3072, 320, 512 + 320);
-				read16_dual(addr + 3072,  64, 512 +  64);
-				read16_dual(addr + 3072, 192, 512 + 192);
-				read16_dual(addr + 3072, 448, 512 + 448);
-			}
-		}
-		break;
-	case 4:
-		for (rounds = 0; !stop_now; rounds++) {
-			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
-				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 4096-byte address space is crossed following pseudo-random
-				 * moves within 64 byte locations and for each we test both the
-				 * position and a next one 512 bytes apart. This guarantees to
-				 * perform non-contiguous accesses that prevent any streaming
-				 * operation from being performed.
-				 */
-				addr = area + (rnd & mask);
-
-				read32_dual(addr + 0000,   0, 512 +   0);
-				read32_dual(addr + 0000, 256, 512 + 256);
-				read32_dual(addr + 0000, 128, 512 + 128);
-				read32_dual(addr + 0000, 384, 512 + 384);
-				read32_dual(addr + 0000, 320, 512 + 320);
-				read32_dual(addr + 0000,  64, 512 +  64);
-				read32_dual(addr + 0000, 192, 512 + 192);
-				read32_dual(addr + 0000, 448, 512 + 448);
-
-				read32_dual(addr + 1024,   0, 512 +   0);
-				read32_dual(addr + 1024, 256, 512 + 256);
-				read32_dual(addr + 1024, 128, 512 + 128);
-				read32_dual(addr + 1024, 384, 512 + 384);
-				read32_dual(addr + 1024, 320, 512 + 320);
-				read32_dual(addr + 1024,  64, 512 +  64);
-				read32_dual(addr + 1024, 192, 512 + 192);
-				read32_dual(addr + 1024, 448, 512 + 448);
-
-				read32_dual(addr + 2048,   0, 512 +   0);
-				read32_dual(addr + 2048, 256, 512 + 256);
-				read32_dual(addr + 2048, 128, 512 + 128);
-				read32_dual(addr + 2048, 384, 512 + 384);
-				read32_dual(addr + 2048, 320, 512 + 320);
-				read32_dual(addr + 2048,  64, 512 +  64);
-				read32_dual(addr + 2048, 192, 512 + 192);
-				read32_dual(addr + 2048, 448, 512 + 448);
-
-				read32_dual(addr + 3072,   0, 512 +   0);
-				read32_dual(addr + 3072, 256, 512 + 256);
-				read32_dual(addr + 3072, 128, 512 + 128);
-				read32_dual(addr + 3072, 384, 512 + 384);
-				read32_dual(addr + 3072, 320, 512 + 320);
-				read32_dual(addr + 3072,  64, 512 +  64);
-				read32_dual(addr + 3072, 192, 512 + 192);
-				read32_dual(addr + 3072, 448, 512 + 448);
-			}
-		}
-		break;
-	case 8: {
-		for (rounds = 0; !stop_now; rounds++) {
-			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
-				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 4096-byte address space is crossed following pseudo-random
-				 * moves within 64 byte locations and for each we test both the
-				 * position and a next one 512 bytes apart. This guarantees to
-				 * perform non-contiguous accesses that prevent any streaming
-				 * operation from being performed.
-				 */
-				addr = area + (rnd & mask);
-
-				read64_dual(addr + 0000,   0, 512 +   0);
-				read64_dual(addr + 0000, 256, 512 + 256);
-				read64_dual(addr + 0000, 128, 512 + 128);
-				read64_dual(addr + 0000, 384, 512 + 384);
-				read64_dual(addr + 0000, 320, 512 + 320);
-				read64_dual(addr + 0000,  64, 512 +  64);
-				read64_dual(addr + 0000, 192, 512 + 192);
-				read64_dual(addr + 0000, 448, 512 + 448);
-
-				read64_dual(addr + 1024,   0, 512 +   0);
-				read64_dual(addr + 1024, 256, 512 + 256);
-				read64_dual(addr + 1024, 128, 512 + 128);
-				read64_dual(addr + 1024, 384, 512 + 384);
-				read64_dual(addr + 1024, 320, 512 + 320);
-				read64_dual(addr + 1024,  64, 512 +  64);
-				read64_dual(addr + 1024, 192, 512 + 192);
-				read64_dual(addr + 1024, 448, 512 + 448);
-
-				read64_dual(addr + 2048,   0, 512 +   0);
-				read64_dual(addr + 2048, 256, 512 + 256);
-				read64_dual(addr + 2048, 128, 512 + 128);
-				read64_dual(addr + 2048, 384, 512 + 384);
-				read64_dual(addr + 2048, 320, 512 + 320);
-				read64_dual(addr + 2048,  64, 512 +  64);
-				read64_dual(addr + 2048, 192, 512 + 192);
-				read64_dual(addr + 2048, 448, 512 + 448);
-
-				read64_dual(addr + 3072,   0, 512 +   0);
-				read64_dual(addr + 3072, 256, 512 + 256);
-				read64_dual(addr + 3072, 128, 512 + 128);
-				read64_dual(addr + 3072, 384, 512 + 384);
-				read64_dual(addr + 3072, 320, 512 + 320);
-				read64_dual(addr + 3072,  64, 512 +  64);
-				read64_dual(addr + 3072, 192, 512 + 192);
-				read64_dual(addr + 3072, 448, 512 + 448);
-			}
-		}
-		break;
-	}
-	case 16:
-		for (rounds = 0; !stop_now; rounds++) {
-			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
-				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 4096-byte address space is crossed following pseudo-random
-				 * moves within 64 byte locations and for each we test both the
-				 * position and a next one 512 bytes apart. This guarantees to
-				 * perform non-contiguous accesses that prevent any streaming
-				 * operation from being performed.
-				 */
-				addr = area + (rnd & mask);
-
-				read128_dual(addr + 0000,   0, 512 +   0);
-				read128_dual(addr + 0000, 256, 512 + 256);
-				read128_dual(addr + 0000, 128, 512 + 128);
-				read128_dual(addr + 0000, 384, 512 + 384);
-				read128_dual(addr + 0000, 320, 512 + 320);
-				read128_dual(addr + 0000,  64, 512 +  64);
-				read128_dual(addr + 0000, 192, 512 + 192);
-				read128_dual(addr + 0000, 448, 512 + 448);
-
-				read128_dual(addr + 1024,   0, 512 +   0);
-				read128_dual(addr + 1024, 256, 512 + 256);
-				read128_dual(addr + 1024, 128, 512 + 128);
-				read128_dual(addr + 1024, 384, 512 + 384);
-				read128_dual(addr + 1024, 320, 512 + 320);
-				read128_dual(addr + 1024,  64, 512 +  64);
-				read128_dual(addr + 1024, 192, 512 + 192);
-				read128_dual(addr + 1024, 448, 512 + 448);
-
-				read128_dual(addr + 2048,   0, 512 +   0);
-				read128_dual(addr + 2048, 256, 512 + 256);
-				read128_dual(addr + 2048, 128, 512 + 128);
-				read128_dual(addr + 2048, 384, 512 + 384);
-				read128_dual(addr + 2048, 320, 512 + 320);
-				read128_dual(addr + 2048,  64, 512 +  64);
-				read128_dual(addr + 2048, 192, 512 + 192);
-				read128_dual(addr + 2048, 448, 512 + 448);
-
-				read128_dual(addr + 3072,   0, 512 +   0);
-				read128_dual(addr + 3072, 256, 512 + 256);
-				read128_dual(addr + 3072, 128, 512 + 128);
-				read128_dual(addr + 3072, 384, 512 + 384);
-				read128_dual(addr + 3072, 320, 512 + 320);
-				read128_dual(addr + 3072,  64, 512 +  64);
-				read128_dual(addr + 3072, 192, 512 + 192);
-				read128_dual(addr + 3072, 448, 512 + 448);
-			}
-		}
-		break;
-	case 32:
-		for (rounds = 0; !stop_now; rounds++) {
-			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
-				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 4096-byte address space is crossed following pseudo-random
-				 * moves within 64 byte locations and for each we test both the
-				 * position and a next one 512 bytes apart. This guarantees to
-				 * perform non-contiguous accesses that prevent any streaming
-				 * operation from being performed.
-				 */
-				addr = area + (rnd & mask);
-
-				read256_dual(addr + 0000,   0, 512 +   0);
-				read256_dual(addr + 0000, 256, 512 + 256);
-				read256_dual(addr + 0000, 128, 512 + 128);
-				read256_dual(addr + 0000, 384, 512 + 384);
-				read256_dual(addr + 0000, 320, 512 + 320);
-				read256_dual(addr + 0000,  64, 512 +  64);
-				read256_dual(addr + 0000, 192, 512 + 192);
-				read256_dual(addr + 0000, 448, 512 + 448);
-
-				read256_dual(addr + 1024,   0, 512 +   0);
-				read256_dual(addr + 1024, 256, 512 + 256);
-				read256_dual(addr + 1024, 128, 512 + 128);
-				read256_dual(addr + 1024, 384, 512 + 384);
-				read256_dual(addr + 1024, 320, 512 + 320);
-				read256_dual(addr + 1024,  64, 512 +  64);
-				read256_dual(addr + 1024, 192, 512 + 192);
-				read256_dual(addr + 1024, 448, 512 + 448);
-
-				read256_dual(addr + 2048,   0, 512 +   0);
-				read256_dual(addr + 2048, 256, 512 + 256);
-				read256_dual(addr + 2048, 128, 512 + 128);
-				read256_dual(addr + 2048, 384, 512 + 384);
-				read256_dual(addr + 2048, 320, 512 + 320);
-				read256_dual(addr + 2048,  64, 512 +  64);
-				read256_dual(addr + 2048, 192, 512 + 192);
-				read256_dual(addr + 2048, 448, 512 + 448);
-
-				read256_dual(addr + 3072,   0, 512 +   0);
-				read256_dual(addr + 3072, 256, 512 + 256);
-				read256_dual(addr + 3072, 128, 512 + 128);
-				read256_dual(addr + 3072, 384, 512 + 384);
-				read256_dual(addr + 3072, 320, 512 + 320);
-				read256_dual(addr + 3072,  64, 512 +  64);
-				read256_dual(addr + 3072, 192, 512 + 192);
-				read256_dual(addr + 3072, 448, 512 + 448);
-			}
-		}
-		break;
-	case 64:
-		for (rounds = 0; !stop_now; rounds++) {
-			for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
-				/* Walk following a pseudo-random pattern and limit redundancy.
-				 * A 4096-byte address space is crossed following pseudo-random
-				 * moves within 64 byte locations and for each we test both the
-				 * position and a next one 512 bytes apart. This guarantees to
-				 * perform non-contiguous accesses that prevent any streaming
-				 * operation from being performed.
-				 */
-				addr = area + (rnd & mask);
-
-				read512(addr + 0000,   0); read512(addr + 0000, 512 +   0);
-				read512(addr + 0000, 256); read512(addr + 0000, 512 + 256);
-				read512(addr + 0000, 128); read512(addr + 0000, 512 + 128);
-				read512(addr + 0000, 384); read512(addr + 0000, 512 + 384);
-				read512(addr + 0000, 320); read512(addr + 0000, 512 + 320);
-				read512(addr + 0000,  64); read512(addr + 0000, 512 +  64);
-				read512(addr + 0000, 192); read512(addr + 0000, 512 + 192);
-				read512(addr + 0000, 448); read512(addr + 0000, 512 + 448);
-
-				read512(addr + 1024,   0); read512(addr + 1024, 512 +   0);
-				read512(addr + 1024, 256); read512(addr + 1024, 512 + 256);
-				read512(addr + 1024, 128); read512(addr + 1024, 512 + 128);
-				read512(addr + 1024, 384); read512(addr + 1024, 512 + 384);
-				read512(addr + 1024, 320); read512(addr + 1024, 512 + 320);
-				read512(addr + 1024,  64); read512(addr + 1024, 512 +  64);
-				read512(addr + 1024, 192); read512(addr + 1024, 512 + 192);
-				read512(addr + 1024, 448); read512(addr + 1024, 512 + 448);
-
-				read512(addr + 2048,   0); read512(addr + 2048, 512 +   0);
-				read512(addr + 2048, 256); read512(addr + 2048, 512 + 256);
-				read512(addr + 2048, 128); read512(addr + 2048, 512 + 128);
-				read512(addr + 2048, 384); read512(addr + 2048, 512 + 384);
-				read512(addr + 2048, 320); read512(addr + 2048, 512 + 320);
-				read512(addr + 2048,  64); read512(addr + 2048, 512 +  64);
-				read512(addr + 2048, 192); read512(addr + 2048, 512 + 192);
-				read512(addr + 2048, 448); read512(addr + 2048, 512 + 448);
-
-				read512(addr + 3072,   0); read512(addr + 3072, 512 +   0);
-				read512(addr + 3072, 256); read512(addr + 3072, 512 + 256);
-				read512(addr + 3072, 128); read512(addr + 3072, 512 + 128);
-				read512(addr + 3072, 384); read512(addr + 3072, 512 + 384);
-				read512(addr + 3072, 320); read512(addr + 3072, 512 + 320);
-				read512(addr + 3072,  64); read512(addr + 3072, 512 +  64);
-				read512(addr + 3072, 192); read512(addr + 3072, 512 + 192);
-				read512(addr + 3072, 448); read512(addr + 3072, 512 + 448);
-			}
-		}
-		break;
-	}
+	rounds = run[fct](area, mask);
 
 	after = rdtsc();
 	set_alarm(0);
@@ -788,6 +852,14 @@ int main(int argc, char **argv)
 
 	if (argc > 2)
 		size_max = atol(argv[2]) * 1024;
+
+	run[0] = run8_generic;
+	run[1] = run16_generic;
+	run[2] = run32_generic;
+	run[3] = run64_generic;
+	run[4] = run128_generic;
+	run[5] = run256_generic;
+	run[6] = run512_generic;
 
 	area = malloc(size_max + 4096);
 	if ((off_t)area & 4095)
