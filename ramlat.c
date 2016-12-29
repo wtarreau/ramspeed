@@ -110,6 +110,10 @@ static inline void read64_dual(const char *addr, const unsigned long ofs1, const
 	             : /* no output */
 	             : "r" (addr), "I" (ofs1), "I" (ofs2)
 	             : "%d4", "%d5");
+#elif defined(__ARM_ARCH_7A__)
+	uint32_t r0, r1;
+	asm volatile("ldrd %0, %1, [%2,%3]" : "=r" (r0), "=r" (r1) : "r" (addr), "I" (ofs1));
+	asm volatile("ldrd %0, %1, [%2,%3]" : "=r" (r0), "=r" (r1) : "r" (addr), "I" (ofs2));
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1)), "r" (*(uint64_t *)(addr + ofs2)));
@@ -136,7 +140,6 @@ static inline void read128(const char *addr, const unsigned long ofs)
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
 	             : "%d4", "%d5");
-
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : :
@@ -168,6 +171,8 @@ static inline void read256(const char *addr, const unsigned long ofs)
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
 	             : "%d4", "%d5", "%d6", "%d7");
+#elif defined(__ARM_ARCH_7A__)
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  0)), "r" (*(uint64_t *)(addr + ofs +  8)));
@@ -209,6 +214,9 @@ static inline void read512(const char *addr, const unsigned long ofs)
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
 	             : "%d4", "%d5", "%d6", "%d7");
+#elif defined(__ARM_ARCH_7A__)
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs + 32) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
 #else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  0)), "r" (*(uint64_t *)(addr + ofs +  8)));
