@@ -792,22 +792,6 @@ unsigned int run128_vfp(void *area, size_t mask)
 
 static inline void read256(const char *addr, const unsigned long ofs)
 {
-#ifdef __SSE4_1__
-	__m128i xmm0, xmm1;
-	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
-	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
-	             "1" (_mm_load_si128((void *)(addr + ofs + 16))));
-#elif defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
-	asm volatile("vldr %%d4, [%0,%1]\n\t"
-	             "vldr %%d5, [%0,%1+8]\n\t"
-	             "vldr %%d6, [%0,%1+16]\n\t"
-	             "vldr %%d7, [%0,%1+24]\n\t"
-	             : /* no output */
-	             : "r" (addr), "I" (ofs)
-	             : "%d4", "%d5", "%d6", "%d7");
-#elif defined(__ARM_ARCH_7A__)
-	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
-#else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  0)), "r" (*(uint64_t *)(addr + ofs +  8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 16)), "r" (*(uint64_t *)(addr + ofs + 24)));
@@ -818,35 +802,10 @@ static inline void read256(const char *addr, const unsigned long ofs)
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 16)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 24)));
 	}
-#endif
 }
 
 static inline void read256_dual(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
 {
-#ifdef __SSE4_1__
-	__m128i xmm0, xmm1, xmm2, xmm3;
-	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
-	             "0" (_mm_load_si128((void *)(addr + ofs1 +  0))),
-	             "1" (_mm_load_si128((void *)(addr + ofs1 + 16))),
-	             "2" (_mm_load_si128((void *)(addr + ofs2 +  0))),
-	             "3" (_mm_load_si128((void *)(addr + ofs2 + 16))));
-#elif defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
-	asm volatile("vldr %%d4, [%0,%1]\n\t"
-	             "vldr %%d5, [%0,%2]\n\t"
-	             "vldr %%d6, [%0,%1+8]\n\t"
-	             "vldr %%d7, [%0,%2+8]\n\t"
-	             "vldr %%d4, [%0,%1+16]\n\t"
-	             "vldr %%d5, [%0,%2+16]\n\t"
-	             "vldr %%d6, [%0,%1+24]\n\t"
-	             "vldr %%d7, [%0,%2+24]\n\t"
-
-	             : /* no output */
-	             : "r" (addr), "I" (ofs1), "I" (ofs2)
-	             : "%d4", "%d5", "%d6", "%d7");
-#elif defined(__ARM_ARCH_7A__)
-	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs1 +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
-	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs2 +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
-#else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1 +  0)), "r" (*(uint64_t *)(addr + ofs1 +  8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1 + 16)), "r" (*(uint64_t *)(addr + ofs1 + 24)));
@@ -863,7 +822,6 @@ static inline void read256_dual(const char *addr, const unsigned long ofs1, cons
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2 + 16)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2 + 24)));
 	}
-#endif
 }
 
 /* runs the 256-bit test, returns the number of rounds */
@@ -923,6 +881,233 @@ unsigned int run256_generic(void *area, size_t mask)
 	}
 	return rounds;
 }
+
+#ifdef __SSE4_1__
+static inline void read256_sse(const char *addr, const unsigned long ofs)
+{
+	__m128i xmm0, xmm1;
+	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
+	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
+	             "1" (_mm_load_si128((void *)(addr + ofs + 16))));
+}
+
+static inline void read256_dual_sse(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+{
+	__m128i xmm0, xmm1, xmm2, xmm3;
+	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
+	             "0" (_mm_load_si128((void *)(addr + ofs1 +  0))),
+	             "1" (_mm_load_si128((void *)(addr + ofs1 + 16))),
+	             "2" (_mm_load_si128((void *)(addr + ofs2 +  0))),
+	             "3" (_mm_load_si128((void *)(addr + ofs2 + 16))));
+}
+
+/* runs the 256-bit test, returns the number of rounds */
+unsigned int run256_sse(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read256_dual_sse(addr + 0000,   0, 512 +   0);
+			read256_dual_sse(addr + 0000, 256, 512 + 256);
+			read256_dual_sse(addr + 0000, 128, 512 + 128);
+			read256_dual_sse(addr + 0000, 384, 512 + 384);
+			read256_dual_sse(addr + 0000, 320, 512 + 320);
+			read256_dual_sse(addr + 0000,  64, 512 +  64);
+			read256_dual_sse(addr + 0000, 192, 512 + 192);
+			read256_dual_sse(addr + 0000, 448, 512 + 448);
+			read256_dual_sse(addr + 1024,   0, 512 +   0);
+			read256_dual_sse(addr + 1024, 256, 512 + 256);
+			read256_dual_sse(addr + 1024, 128, 512 + 128);
+			read256_dual_sse(addr + 1024, 384, 512 + 384);
+			read256_dual_sse(addr + 1024, 320, 512 + 320);
+			read256_dual_sse(addr + 1024,  64, 512 +  64);
+			read256_dual_sse(addr + 1024, 192, 512 + 192);
+			read256_dual_sse(addr + 1024, 448, 512 + 448);
+			read256_dual_sse(addr + 2048,   0, 512 +   0);
+			read256_dual_sse(addr + 2048, 256, 512 + 256);
+			read256_dual_sse(addr + 2048, 128, 512 + 128);
+			read256_dual_sse(addr + 2048, 384, 512 + 384);
+			read256_dual_sse(addr + 2048, 320, 512 + 320);
+			read256_dual_sse(addr + 2048,  64, 512 +  64);
+			read256_dual_sse(addr + 2048, 192, 512 + 192);
+			read256_dual_sse(addr + 2048, 448, 512 + 448);
+			read256_dual_sse(addr + 3072,   0, 512 +   0);
+			read256_dual_sse(addr + 3072, 256, 512 + 256);
+			read256_dual_sse(addr + 3072, 128, 512 + 128);
+			read256_dual_sse(addr + 3072, 384, 512 + 384);
+			read256_dual_sse(addr + 3072, 320, 512 + 320);
+			read256_dual_sse(addr + 3072,  64, 512 +  64);
+			read256_dual_sse(addr + 3072, 192, 512 + 192);
+			read256_dual_sse(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
+
+#if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+static inline void read256_vfp(const char *addr, const unsigned long ofs)
+{
+	asm volatile("vldr %%d4, [%0,%1]\n\t"
+	             "vldr %%d5, [%0,%1+8]\n\t"
+	             "vldr %%d6, [%0,%1+16]\n\t"
+	             "vldr %%d7, [%0,%1+24]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5", "%d6", "%d7");
+}
+
+static inline void read256_dual_vfp(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+{
+	asm volatile("vldr %%d4, [%0,%1]\n\t"
+	             "vldr %%d5, [%0,%2]\n\t"
+	             "vldr %%d6, [%0,%1+8]\n\t"
+	             "vldr %%d7, [%0,%2+8]\n\t"
+	             "vldr %%d4, [%0,%1+16]\n\t"
+	             "vldr %%d5, [%0,%2+16]\n\t"
+	             "vldr %%d6, [%0,%1+24]\n\t"
+	             "vldr %%d7, [%0,%2+24]\n\t"
+
+	             : /* no output */
+	             : "r" (addr), "I" (ofs1), "I" (ofs2)
+	             : "%d4", "%d5", "%d6", "%d7");
+}
+
+/* runs the 256-bit test, returns the number of rounds */
+unsigned int run256_vfp(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read256_dual_vfp(addr + 0000,   0, 512 +   0);
+			read256_dual_vfp(addr + 0000, 256, 512 + 256);
+			read256_dual_vfp(addr + 0000, 128, 512 + 128);
+			read256_dual_vfp(addr + 0000, 384, 512 + 384);
+			read256_dual_vfp(addr + 0000, 320, 512 + 320);
+			read256_dual_vfp(addr + 0000,  64, 512 +  64);
+			read256_dual_vfp(addr + 0000, 192, 512 + 192);
+			read256_dual_vfp(addr + 0000, 448, 512 + 448);
+			read256_dual_vfp(addr + 1024,   0, 512 +   0);
+			read256_dual_vfp(addr + 1024, 256, 512 + 256);
+			read256_dual_vfp(addr + 1024, 128, 512 + 128);
+			read256_dual_vfp(addr + 1024, 384, 512 + 384);
+			read256_dual_vfp(addr + 1024, 320, 512 + 320);
+			read256_dual_vfp(addr + 1024,  64, 512 +  64);
+			read256_dual_vfp(addr + 1024, 192, 512 + 192);
+			read256_dual_vfp(addr + 1024, 448, 512 + 448);
+			read256_dual_vfp(addr + 2048,   0, 512 +   0);
+			read256_dual_vfp(addr + 2048, 256, 512 + 256);
+			read256_dual_vfp(addr + 2048, 128, 512 + 128);
+			read256_dual_vfp(addr + 2048, 384, 512 + 384);
+			read256_dual_vfp(addr + 2048, 320, 512 + 320);
+			read256_dual_vfp(addr + 2048,  64, 512 +  64);
+			read256_dual_vfp(addr + 2048, 192, 512 + 192);
+			read256_dual_vfp(addr + 2048, 448, 512 + 448);
+			read256_dual_vfp(addr + 3072,   0, 512 +   0);
+			read256_dual_vfp(addr + 3072, 256, 512 + 256);
+			read256_dual_vfp(addr + 3072, 128, 512 + 128);
+			read256_dual_vfp(addr + 3072, 384, 512 + 384);
+			read256_dual_vfp(addr + 3072, 320, 512 + 320);
+			read256_dual_vfp(addr + 3072,  64, 512 +  64);
+			read256_dual_vfp(addr + 3072, 192, 512 + 192);
+			read256_dual_vfp(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
+
+#if defined(__ARM_ARCH_7A__)
+static inline void read256_armv7(const char *addr, const unsigned long ofs)
+{
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+}
+
+static inline void read256_dual_armv7(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+{
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs1 +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs2 +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+}
+
+/* runs the 256-bit test, returns the number of rounds */
+unsigned int run256_armv7(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read256_dual_armv7(addr + 0000,   0, 512 +   0);
+			read256_dual_armv7(addr + 0000, 256, 512 + 256);
+			read256_dual_armv7(addr + 0000, 128, 512 + 128);
+			read256_dual_armv7(addr + 0000, 384, 512 + 384);
+			read256_dual_armv7(addr + 0000, 320, 512 + 320);
+			read256_dual_armv7(addr + 0000,  64, 512 +  64);
+			read256_dual_armv7(addr + 0000, 192, 512 + 192);
+			read256_dual_armv7(addr + 0000, 448, 512 + 448);
+			read256_dual_armv7(addr + 1024,   0, 512 +   0);
+			read256_dual_armv7(addr + 1024, 256, 512 + 256);
+			read256_dual_armv7(addr + 1024, 128, 512 + 128);
+			read256_dual_armv7(addr + 1024, 384, 512 + 384);
+			read256_dual_armv7(addr + 1024, 320, 512 + 320);
+			read256_dual_armv7(addr + 1024,  64, 512 +  64);
+			read256_dual_armv7(addr + 1024, 192, 512 + 192);
+			read256_dual_armv7(addr + 1024, 448, 512 + 448);
+			read256_dual_armv7(addr + 2048,   0, 512 +   0);
+			read256_dual_armv7(addr + 2048, 256, 512 + 256);
+			read256_dual_armv7(addr + 2048, 128, 512 + 128);
+			read256_dual_armv7(addr + 2048, 384, 512 + 384);
+			read256_dual_armv7(addr + 2048, 320, 512 + 320);
+			read256_dual_armv7(addr + 2048,  64, 512 +  64);
+			read256_dual_armv7(addr + 2048, 192, 512 + 192);
+			read256_dual_armv7(addr + 2048, 448, 512 + 448);
+			read256_dual_armv7(addr + 3072,   0, 512 +   0);
+			read256_dual_armv7(addr + 3072, 256, 512 + 256);
+			read256_dual_armv7(addr + 3072, 128, 512 + 128);
+			read256_dual_armv7(addr + 3072, 384, 512 + 384);
+			read256_dual_armv7(addr + 3072, 320, 512 + 320);
+			read256_dual_armv7(addr + 3072,  64, 512 +  64);
+			read256_dual_armv7(addr + 3072, 192, 512 + 192);
+			read256_dual_armv7(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
 
 
 /*****************************************************************************
@@ -1234,17 +1419,20 @@ int main(int argc, char **argv)
 	if (implementation & USE_SSE) {
 		run[3] = run64_sse;
 		run[4] = run128_sse;
+		run[5] = run256_sse;
 	}
 #endif
 #if defined(__ARM_ARCH_7A__)
 	if (implementation & USE_ARMV7) {
 		run[3] = run64_armv7;
+		run[5] = run256_armv7;
 	}
 #endif
 #if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
 	if (implementation & USE_VFP) {
 		run[3] = run64_vfp;
 		run[4] = run128_vfp;
+		run[5] = run256_vfp;
 	}
 #endif
 
