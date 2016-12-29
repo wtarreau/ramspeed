@@ -785,37 +785,23 @@ unsigned int run128_vfp(void *area, size_t mask)
  *                             256-bit accesses                              *
  *****************************************************************************/
 
-static inline void read256(const char *addr, const unsigned long ofs)
+static inline void read256_dual(const char *addr, const unsigned long ofs)
 {
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  0)), "r" (*(uint64_t *)(addr + ofs +  8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 16)), "r" (*(uint64_t *)(addr + ofs + 24)));
+		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 512 +  0)), "r" (*(uint64_t *)(addr + ofs + 512 +  8)));
+		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 512 + 16)), "r" (*(uint64_t *)(addr + ofs + 512 + 24)));
 	}
 	else {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  0)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 16)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 24)));
-	}
-}
-
-static inline void read256_dual(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
-{
-	if (HAS_MANY_REGISTERS) {
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1 +  0)), "r" (*(uint64_t *)(addr + ofs1 +  8)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1 + 16)), "r" (*(uint64_t *)(addr + ofs1 + 24)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2 +  0)), "r" (*(uint64_t *)(addr + ofs2 +  8)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2 + 16)), "r" (*(uint64_t *)(addr + ofs2 + 24)));
-	}
-	else {
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1 +  0)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1 +  8)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1 + 16)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1 + 24)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2 +  0)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2 +  8)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2 + 16)));
-		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2 + 24)));
+		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 512 +  0)));
+		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 512 +  8)));
+		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 512 + 16)));
+		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 512 + 24)));
 	}
 }
 
@@ -837,41 +823,47 @@ unsigned int run256_generic(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read256_dual(addr + 0000,   0, 512 +   0);
-			read256_dual(addr + 0000, 256, 512 + 256);
-			read256_dual(addr + 0000, 128, 512 + 128);
-			read256_dual(addr + 0000, 384, 512 + 384);
-			read256_dual(addr + 0000, 320, 512 + 320);
-			read256_dual(addr + 0000,  64, 512 +  64);
-			read256_dual(addr + 0000, 192, 512 + 192);
-			read256_dual(addr + 0000, 448, 512 + 448);
+			read256_dual(addr,   0);
+			read256_dual(addr, 128);
+			read256_dual(addr, 256);
+			read256_dual(addr, 384);
+			read256_dual(addr,  64);
+			read256_dual(addr, 192);
+			read256_dual(addr, 320);
+			read256_dual(addr, 448);
 
-			read256_dual(addr + 1024,   0, 512 +   0);
-			read256_dual(addr + 1024, 256, 512 + 256);
-			read256_dual(addr + 1024, 128, 512 + 128);
-			read256_dual(addr + 1024, 384, 512 + 384);
-			read256_dual(addr + 1024, 320, 512 + 320);
-			read256_dual(addr + 1024,  64, 512 +  64);
-			read256_dual(addr + 1024, 192, 512 + 192);
-			read256_dual(addr + 1024, 448, 512 + 448);
+			addr += 1024;
 
-			read256_dual(addr + 2048,   0, 512 +   0);
-			read256_dual(addr + 2048, 256, 512 + 256);
-			read256_dual(addr + 2048, 128, 512 + 128);
-			read256_dual(addr + 2048, 384, 512 + 384);
-			read256_dual(addr + 2048, 320, 512 + 320);
-			read256_dual(addr + 2048,  64, 512 +  64);
-			read256_dual(addr + 2048, 192, 512 + 192);
-			read256_dual(addr + 2048, 448, 512 + 448);
+			read256_dual(addr,   0);
+			read256_dual(addr, 128);
+			read256_dual(addr, 256);
+			read256_dual(addr, 384);
+			read256_dual(addr,  64);
+			read256_dual(addr, 192);
+			read256_dual(addr, 320);
+			read256_dual(addr, 448);
 
-			read256_dual(addr + 3072,   0, 512 +   0);
-			read256_dual(addr + 3072, 256, 512 + 256);
-			read256_dual(addr + 3072, 128, 512 + 128);
-			read256_dual(addr + 3072, 384, 512 + 384);
-			read256_dual(addr + 3072, 320, 512 + 320);
-			read256_dual(addr + 3072,  64, 512 +  64);
-			read256_dual(addr + 3072, 192, 512 + 192);
-			read256_dual(addr + 3072, 448, 512 + 448);
+			addr += 1024;
+
+			read256_dual(addr,   0);
+			read256_dual(addr, 128);
+			read256_dual(addr, 256);
+			read256_dual(addr, 384);
+			read256_dual(addr,  64);
+			read256_dual(addr, 192);
+			read256_dual(addr, 320);
+			read256_dual(addr, 448);
+
+			addr += 1024;
+
+			read256_dual(addr,   0);
+			read256_dual(addr, 128);
+			read256_dual(addr, 256);
+			read256_dual(addr, 384);
+			read256_dual(addr,  64);
+			read256_dual(addr, 192);
+			read256_dual(addr, 320);
+			read256_dual(addr, 448);
 		}
 	}
 	return rounds;
