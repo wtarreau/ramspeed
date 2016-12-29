@@ -781,7 +781,7 @@ unsigned int run128_vfp(void *area, size_t mask)
 #endif
 
 #if defined(__ARM_ARCH_7A__)
-static inline void read128_dual_armv7(const char *addr, const unsigned long ofs)
+static inline void read128_quad_armv7(const char *addr, const unsigned long ofs)
 {
 #ifdef __thumb2__
 	asm volatile("ldrd %%r0, %%r1, [%0,%1]\n\t"
@@ -791,11 +791,25 @@ static inline void read128_dual_armv7(const char *addr, const unsigned long ofs)
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
 	             : "r0", "r1", "r2", "r3");
+	asm volatile("ldrd %%r0, %%r1, [%0,%1+128]\n\t"
+	             "ldrd %%r2, %%r3, [%0,%1+128+8]\n\t"
+	             "ldrd %%r0, %%r1, [%0,%1+128+512]\n\t"
+	             "ldrd %%r2, %%r3, [%0,%1+128+512+8]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "r0", "r1", "r2", "r3");
 #else
 	asm volatile("ldrd %%r0, %%r1, [%0]\n\t"
 	             "ldrd %%r2, %%r3, [%0,#8]\n\t"
 	             "ldrd %%r0, %%r1, [%1]\n\t"
 	             "ldrd %%r2, %%r3, [%1,#8]\n\t"
+	             : /* no output */
+	             : "r" (addr + ofs), "r" (addr + ofs + 512)
+	             : "r0", "r1", "r2", "r3");
+	asm volatile("ldrd %%r0, %%r1, [%0,#128]\n\t"
+	             "ldrd %%r2, %%r3, [%0,#128+8]\n\t"
+	             "ldrd %%r0, %%r1, [%1,#128]\n\t"
+	             "ldrd %%r2, %%r3, [%1,#128+8]\n\t"
 	             : /* no output */
 	             : "r" (addr + ofs), "r" (addr + ofs + 512)
 	             : "r0", "r1", "r2", "r3");
@@ -820,47 +834,31 @@ unsigned int run128_armv7(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read128_dual_armv7(addr,   0);
-			read128_dual_armv7(addr, 128);
-			read128_dual_armv7(addr, 256);
-			read128_dual_armv7(addr, 384);
-			read128_dual_armv7(addr,  64);
-			read128_dual_armv7(addr, 192);
-			read128_dual_armv7(addr, 320);
-			read128_dual_armv7(addr, 448);
+			read128_quad_armv7(addr,   0);
+			read128_quad_armv7(addr, 256);
+			read128_quad_armv7(addr,  64);
+			read128_quad_armv7(addr, 320);
 
 			addr += 1024;
 
-			read128_dual_armv7(addr,   0);
-			read128_dual_armv7(addr, 128);
-			read128_dual_armv7(addr, 256);
-			read128_dual_armv7(addr, 384);
-			read128_dual_armv7(addr,  64);
-			read128_dual_armv7(addr, 192);
-			read128_dual_armv7(addr, 320);
-			read128_dual_armv7(addr, 448);
+			read128_quad_armv7(addr,   0);
+			read128_quad_armv7(addr, 256);
+			read128_quad_armv7(addr,  64);
+			read128_quad_armv7(addr, 320);
 
 			addr += 1024;
 
-			read128_dual_armv7(addr,   0);
-			read128_dual_armv7(addr, 128);
-			read128_dual_armv7(addr, 256);
-			read128_dual_armv7(addr, 384);
-			read128_dual_armv7(addr,  64);
-			read128_dual_armv7(addr, 192);
-			read128_dual_armv7(addr, 320);
-			read128_dual_armv7(addr, 448);
+			read128_quad_armv7(addr,   0);
+			read128_quad_armv7(addr, 256);
+			read128_quad_armv7(addr,  64);
+			read128_quad_armv7(addr, 320);
 
 			addr += 1024;
 
-			read128_dual_armv7(addr,   0);
-			read128_dual_armv7(addr, 128);
-			read128_dual_armv7(addr, 256);
-			read128_dual_armv7(addr, 384);
-			read128_dual_armv7(addr,  64);
-			read128_dual_armv7(addr, 192);
-			read128_dual_armv7(addr, 320);
-			read128_dual_armv7(addr, 448);
+			read128_quad_armv7(addr,   0);
+			read128_quad_armv7(addr, 256);
+			read128_quad_armv7(addr,  64);
+			read128_quad_armv7(addr, 320);
 		}
 	}
 	return rounds;
