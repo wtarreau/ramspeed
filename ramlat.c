@@ -48,7 +48,7 @@ unsigned int run8_generic(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -57,6 +57,7 @@ unsigned int run8_generic(void *area, size_t mask)
 			 * operation from being performed.
 			 */
 			addr = area + (rnd & mask);
+			rnd -= 257 * 4096;
 
 			read8_dual(addr,   0);
 			read8_dual(addr, 128);
@@ -128,7 +129,7 @@ unsigned int run16_generic(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -137,6 +138,7 @@ unsigned int run16_generic(void *area, size_t mask)
 			 * operation from being performed.
 			 */
 			addr = area + (rnd & mask);
+			rnd -= 257 * 4096;
 
 			read16_dual(addr,   0);
 			read16_dual(addr, 128);
@@ -205,10 +207,10 @@ unsigned int run32_generic(void *area, size_t mask)
 {
 	unsigned int rounds;
 	const char *addr;
-	size_t rnd;
+	size_t rnd = 0;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -217,6 +219,7 @@ unsigned int run32_generic(void *area, size_t mask)
 			 * operation from being performed.
 			 */
 			addr = area + (rnd & mask);
+			rnd -= 257 * 4096;
 
 			read32_dual(addr,   0);
 			read32_dual(addr, 128);
@@ -288,7 +291,7 @@ unsigned int run64_generic(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -297,6 +300,7 @@ unsigned int run64_generic(void *area, size_t mask)
 			 * operation from being performed.
 			 */
 			addr = area + (rnd & mask);
+			rnd -= 257 * 4096;
 
 			read64_dual(addr,   0);
 			read64_dual(addr, 128);
@@ -362,7 +366,7 @@ unsigned int run64_sse(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -373,6 +377,7 @@ unsigned int run64_sse(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read64_dual_sse(addr,   0);
+			rnd -= 257 * 4096;
 			read64_dual_sse(addr, 128);
 			read64_dual_sse(addr, 256);
 			read64_dual_sse(addr, 384);
@@ -440,7 +445,7 @@ unsigned int run64_vfp(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -451,6 +456,7 @@ unsigned int run64_vfp(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read64_quad_vfp(addr,   0);
+			rnd -= 257 * 4096;
 			read64_quad_vfp(addr, 256);
 			read64_quad_vfp(addr,  64);
 			read64_quad_vfp(addr, 320);
@@ -512,7 +518,7 @@ unsigned int run64_armv7(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -523,6 +529,7 @@ unsigned int run64_armv7(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read64_quad_armv7(addr,   0);
+			rnd -= 257 * 4096;
 			read64_quad_armv7(addr, 256);
 			read64_quad_armv7(addr,  64);
 			read64_quad_armv7(addr, 320);
@@ -583,7 +590,7 @@ unsigned int run128_generic(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -592,6 +599,7 @@ unsigned int run128_generic(void *area, size_t mask)
 			 * operation from being performed.
 			 */
 			addr = area + (rnd & mask);
+			rnd -= 257 * 4096;
 
 			read128_dual(addr,   0);
 			read128_dual(addr, 128);
@@ -657,7 +665,7 @@ unsigned int run128_sse(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -668,6 +676,7 @@ unsigned int run128_sse(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read128_dual_sse(addr,   0);
+			rnd -= 257 * 4096;
 			read128_dual_sse(addr, 128);
 			read128_dual_sse(addr, 256);
 			read128_dual_sse(addr, 384);
@@ -739,7 +748,7 @@ unsigned int run128_vfp(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -750,6 +759,7 @@ unsigned int run128_vfp(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read128_quad_vfp(addr,   0);
+			rnd -= 257 * 4096;
 			read128_quad_vfp(addr, 256);
 			read128_quad_vfp(addr,  64);
 			read128_quad_vfp(addr, 320);
@@ -824,7 +834,7 @@ unsigned int run128_armv7(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -835,6 +845,7 @@ unsigned int run128_armv7(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read128_quad_armv7(addr,   0);
+			rnd -= 257 * 4096;
 			read128_quad_armv7(addr, 256);
 			read128_quad_armv7(addr,  64);
 			read128_quad_armv7(addr, 320);
@@ -898,7 +909,7 @@ unsigned int run256_generic(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -907,6 +918,7 @@ unsigned int run256_generic(void *area, size_t mask)
 			 * operation from being performed.
 			 */
 			addr = area + (rnd & mask);
+			rnd -= 257 * 4096;
 
 			read256_dual(addr,   0);
 			read256_dual(addr, 128);
@@ -973,7 +985,7 @@ unsigned int run256_sse(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -984,6 +996,7 @@ unsigned int run256_sse(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read256_dual_sse(addr,   0);
+			rnd -= 257 * 4096;
 			read256_dual_sse(addr, 128);
 			read256_dual_sse(addr, 256);
 			read256_dual_sse(addr, 384);
@@ -1054,7 +1067,7 @@ unsigned int run256_vfp(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -1065,6 +1078,7 @@ unsigned int run256_vfp(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read256_dual_vfp(addr,   0);
+			rnd -= 257 * 4096;
 			read256_dual_vfp(addr, 128);
 			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 384);
@@ -1126,7 +1140,7 @@ unsigned int run256_armv7(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -1137,6 +1151,7 @@ unsigned int run256_armv7(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read256_dual_armv7(addr,   0);
+			rnd -= 257 * 4096;
 			read256_dual_armv7(addr, 128);
 			read256_dual_armv7(addr, 256);
 			read256_dual_armv7(addr, 384);
@@ -1216,7 +1231,7 @@ unsigned int run512_generic(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -1225,6 +1240,7 @@ unsigned int run512_generic(void *area, size_t mask)
 			 * operation from being performed.
 			 */
 			addr = area + (rnd & mask);
+			rnd -= 257 * 4096;
 
 			read512(addr,   0); read512(addr, 512 +   0);
 			read512(addr, 128); read512(addr, 512 + 128);
@@ -1296,7 +1312,7 @@ unsigned int run512_sse(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -1307,6 +1323,7 @@ unsigned int run512_sse(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read512_dual_sse(addr,   0);
+			rnd -= 257 * 4096;
 			read512_dual_sse(addr, 128);
 			read512_dual_sse(addr, 256);
 			read512_dual_sse(addr, 384);
@@ -1394,7 +1411,7 @@ unsigned int run512_vfp(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -1405,6 +1422,7 @@ unsigned int run512_vfp(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read512_dual_vfp(addr,   0);
+			rnd -= 257 * 4096;
 			read512_dual_vfp(addr, 128);
 			read512_dual_vfp(addr, 256);
 			read512_dual_vfp(addr, 384);
@@ -1468,7 +1486,7 @@ unsigned int run512_armv7(void *area, size_t mask)
 	size_t rnd;
 
 	for (rounds = 0; !stop_now; rounds++) {
-		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
 			/* Walk following a pseudo-random pattern and limit redundancy.
 			 * A 4096-byte address space is crossed following pseudo-random
 			 * moves within 64 byte locations and for each we test both the
@@ -1479,6 +1497,7 @@ unsigned int run512_armv7(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read512_dual_armv7(addr,   0);
+			rnd -= 257 * 4096;
 			read512_dual_armv7(addr, 128);
 			read512_dual_armv7(addr, 256);
 			read512_dual_armv7(addr, 384);
