@@ -958,30 +958,18 @@ unsigned int run256_sse(void *area, size_t mask)
 #endif
 
 #if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
-static inline void read256_vfp(const char *addr, const unsigned long ofs)
+static inline void read256_dual_vfp(const char *addr, const unsigned long ofs)
 {
 	asm volatile("vldr %%d4, [%0,%1]\n\t"
 	             "vldr %%d5, [%0,%1+8]\n\t"
 	             "vldr %%d6, [%0,%1+16]\n\t"
 	             "vldr %%d7, [%0,%1+24]\n\t"
+	             "vldr %%d4, [%0,%1+512]\n\t"
+	             "vldr %%d5, [%0,%1+512+8]\n\t"
+	             "vldr %%d6, [%0,%1+512+16]\n\t"
+	             "vldr %%d7, [%0,%1+512+24]\n\t"
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
-	             : "%d4", "%d5", "%d6", "%d7");
-}
-
-static inline void read256_dual_vfp(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
-{
-	asm volatile("vldr %%d4, [%0,%1]\n\t"
-	             "vldr %%d5, [%0,%1+8]\n\t"
-	             "vldr %%d6, [%0,%1+16]\n\t"
-	             "vldr %%d7, [%0,%1+24]\n\t"
-	             "vldr %%d4, [%0,%2]\n\t"
-	             "vldr %%d5, [%0,%2+8]\n\t"
-	             "vldr %%d6, [%0,%2+16]\n\t"
-	             "vldr %%d7, [%0,%2+24]\n\t"
-
-	             : /* no output */
-	             : "r" (addr), "I" (ofs1), "I" (ofs2)
 	             : "%d4", "%d5", "%d6", "%d7");
 }
 
@@ -1003,38 +991,47 @@ unsigned int run256_vfp(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read256_dual_vfp(addr + 0000,   0, 512 +   0);
-			read256_dual_vfp(addr + 0000, 256, 512 + 256);
-			read256_dual_vfp(addr + 0000, 128, 512 + 128);
-			read256_dual_vfp(addr + 0000, 384, 512 + 384);
-			read256_dual_vfp(addr + 0000, 320, 512 + 320);
-			read256_dual_vfp(addr + 0000,  64, 512 +  64);
-			read256_dual_vfp(addr + 0000, 192, 512 + 192);
-			read256_dual_vfp(addr + 0000, 448, 512 + 448);
-			read256_dual_vfp(addr + 1024,   0, 512 +   0);
-			read256_dual_vfp(addr + 1024, 256, 512 + 256);
-			read256_dual_vfp(addr + 1024, 128, 512 + 128);
-			read256_dual_vfp(addr + 1024, 384, 512 + 384);
-			read256_dual_vfp(addr + 1024, 320, 512 + 320);
-			read256_dual_vfp(addr + 1024,  64, 512 +  64);
-			read256_dual_vfp(addr + 1024, 192, 512 + 192);
-			read256_dual_vfp(addr + 1024, 448, 512 + 448);
-			read256_dual_vfp(addr + 2048,   0, 512 +   0);
-			read256_dual_vfp(addr + 2048, 256, 512 + 256);
-			read256_dual_vfp(addr + 2048, 128, 512 + 128);
-			read256_dual_vfp(addr + 2048, 384, 512 + 384);
-			read256_dual_vfp(addr + 2048, 320, 512 + 320);
-			read256_dual_vfp(addr + 2048,  64, 512 +  64);
-			read256_dual_vfp(addr + 2048, 192, 512 + 192);
-			read256_dual_vfp(addr + 2048, 448, 512 + 448);
-			read256_dual_vfp(addr + 3072,   0, 512 +   0);
-			read256_dual_vfp(addr + 3072, 256, 512 + 256);
-			read256_dual_vfp(addr + 3072, 128, 512 + 128);
-			read256_dual_vfp(addr + 3072, 384, 512 + 384);
-			read256_dual_vfp(addr + 3072, 320, 512 + 320);
-			read256_dual_vfp(addr + 3072,  64, 512 +  64);
-			read256_dual_vfp(addr + 3072, 192, 512 + 192);
-			read256_dual_vfp(addr + 3072, 448, 512 + 448);
+			read256_dual_vfp(addr,   0);
+			read256_dual_vfp(addr, 256);
+			read256_dual_vfp(addr, 128);
+			read256_dual_vfp(addr, 384);
+			read256_dual_vfp(addr, 320);
+			read256_dual_vfp(addr,  64);
+			read256_dual_vfp(addr, 192);
+			read256_dual_vfp(addr, 448);
+
+			addr += 1024;
+
+			read256_dual_vfp(addr,   0);
+			read256_dual_vfp(addr, 256);
+			read256_dual_vfp(addr, 128);
+			read256_dual_vfp(addr, 384);
+			read256_dual_vfp(addr, 320);
+			read256_dual_vfp(addr,  64);
+			read256_dual_vfp(addr, 192);
+			read256_dual_vfp(addr, 448);
+
+			addr += 1024;
+
+			read256_dual_vfp(addr,   0);
+			read256_dual_vfp(addr, 256);
+			read256_dual_vfp(addr, 128);
+			read256_dual_vfp(addr, 384);
+			read256_dual_vfp(addr, 320);
+			read256_dual_vfp(addr,  64);
+			read256_dual_vfp(addr, 192);
+			read256_dual_vfp(addr, 448);
+
+			addr += 1024;
+
+			read256_dual_vfp(addr,   0);
+			read256_dual_vfp(addr, 256);
+			read256_dual_vfp(addr, 128);
+			read256_dual_vfp(addr, 384);
+			read256_dual_vfp(addr, 320);
+			read256_dual_vfp(addr,  64);
+			read256_dual_vfp(addr, 192);
+			read256_dual_vfp(addr, 448);
 		}
 	}
 	return rounds;
