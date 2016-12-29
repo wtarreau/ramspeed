@@ -722,10 +722,10 @@ static inline void read128_quad_vfp(const char *addr, const unsigned long ofs)
 	             "vldr %%d5, [%0,%1+8]\n\t"
 	             "vldr %%d6, [%0,%1+512]\n\t"
 	             "vldr %%d7, [%0,%1+512+8]\n\t"
-	             "vldr %%d4, [%0,%1+256]\n\t"
-	             "vldr %%d5, [%0,%1+256+8]\n\t"
-	             "vldr %%d6, [%0,%1+768]\n\t"
-	             "vldr %%d7, [%0,%1+768+8]\n\t"
+	             "vldr %%d4, [%0,%1+128]\n\t"
+	             "vldr %%d5, [%0,%1+128+8]\n\t"
+	             "vldr %%d6, [%0,%1+640]\n\t"
+	             "vldr %%d7, [%0,%1+640+8]\n\t"
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
 	             : "%d4", "%d5", "%d6", "%d7");
@@ -750,30 +750,30 @@ unsigned int run128_vfp(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read128_quad_vfp(addr,   0);
-			read128_quad_vfp(addr, 128);
+			read128_quad_vfp(addr, 256);
 			read128_quad_vfp(addr,  64);
-			read128_quad_vfp(addr, 192);
+			read128_quad_vfp(addr, 320);
 
 			addr += 1024;
 
 			read128_quad_vfp(addr,   0);
-			read128_quad_vfp(addr, 128);
+			read128_quad_vfp(addr, 256);
 			read128_quad_vfp(addr,  64);
-			read128_quad_vfp(addr, 192);
+			read128_quad_vfp(addr, 320);
 
 			addr += 1024;
 
 			read128_quad_vfp(addr,   0);
-			read128_quad_vfp(addr, 128);
+			read128_quad_vfp(addr, 256);
 			read128_quad_vfp(addr,  64);
-			read128_quad_vfp(addr, 192);
+			read128_quad_vfp(addr, 320);
 
 			addr += 1024;
 
 			read128_quad_vfp(addr,   0);
-			read128_quad_vfp(addr, 128);
+			read128_quad_vfp(addr, 256);
 			read128_quad_vfp(addr,  64);
-			read128_quad_vfp(addr, 192);
+			read128_quad_vfp(addr, 320);
 		}
 	}
 	return rounds;
