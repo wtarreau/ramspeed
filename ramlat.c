@@ -471,12 +471,21 @@ unsigned int run64_vfp(void *area, size_t mask)
 
 
 #if defined(__ARM_ARCH_7A__)
-/* same with two addresses at once */
-static inline void read64_dual_armv7(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+static inline void read64_dual_armv7(const char *addr, const unsigned long ofs)
 {
-	uint32_t r0, r1;
-	asm volatile("ldrd %0, %1, [%2,%3]" : "=r" (r0), "=r" (r1) : "r" (addr), "I" (ofs1));
-	asm volatile("ldrd %0, %1, [%2,%3]" : "=r" (r0), "=r" (r1) : "r" (addr), "I" (ofs2));
+#ifdef __thumb2__
+	asm volatile("ldrd %%r0, %%r1, [%0,%1]\n\t"
+	             "ldrd %%r0, %%r1, [%0,%1+512]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "r0", "r1");
+#else
+	asm volatile("ldrd %%r0, %%r1, [%0]\n\t"
+	             "ldrd %%r0, %%r1, [%1]\n\t"
+	             : /* no output */
+	             : "r" (addr + ofs), "r" (addr + ofs + 512)
+	             : "r0", "r1");
+#endif
 }
 
 /* runs the 64-bit test using ARMv7 optimizations, returns the number of rounds */
@@ -497,38 +506,47 @@ unsigned int run64_armv7(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read64_dual_armv7(addr + 0000,   0, 512 +   0);
-			read64_dual_armv7(addr + 0000, 256, 512 + 256);
-			read64_dual_armv7(addr + 0000, 128, 512 + 128);
-			read64_dual_armv7(addr + 0000, 384, 512 + 384);
-			read64_dual_armv7(addr + 0000, 320, 512 + 320);
-			read64_dual_armv7(addr + 0000,  64, 512 +  64);
-			read64_dual_armv7(addr + 0000, 192, 512 + 192);
-			read64_dual_armv7(addr + 0000, 448, 512 + 448);
-			read64_dual_armv7(addr + 1024,   0, 512 +   0);
-			read64_dual_armv7(addr + 1024, 256, 512 + 256);
-			read64_dual_armv7(addr + 1024, 128, 512 + 128);
-			read64_dual_armv7(addr + 1024, 384, 512 + 384);
-			read64_dual_armv7(addr + 1024, 320, 512 + 320);
-			read64_dual_armv7(addr + 1024,  64, 512 +  64);
-			read64_dual_armv7(addr + 1024, 192, 512 + 192);
-			read64_dual_armv7(addr + 1024, 448, 512 + 448);
-			read64_dual_armv7(addr + 2048,   0, 512 +   0);
-			read64_dual_armv7(addr + 2048, 256, 512 + 256);
-			read64_dual_armv7(addr + 2048, 128, 512 + 128);
-			read64_dual_armv7(addr + 2048, 384, 512 + 384);
-			read64_dual_armv7(addr + 2048, 320, 512 + 320);
-			read64_dual_armv7(addr + 2048,  64, 512 +  64);
-			read64_dual_armv7(addr + 2048, 192, 512 + 192);
-			read64_dual_armv7(addr + 2048, 448, 512 + 448);
-			read64_dual_armv7(addr + 3072,   0, 512 +   0);
-			read64_dual_armv7(addr + 3072, 256, 512 + 256);
-			read64_dual_armv7(addr + 3072, 128, 512 + 128);
-			read64_dual_armv7(addr + 3072, 384, 512 + 384);
-			read64_dual_armv7(addr + 3072, 320, 512 + 320);
-			read64_dual_armv7(addr + 3072,  64, 512 +  64);
-			read64_dual_armv7(addr + 3072, 192, 512 + 192);
-			read64_dual_armv7(addr + 3072, 448, 512 + 448);
+			read64_dual_armv7(addr,   0);
+			read64_dual_armv7(addr, 256);
+			read64_dual_armv7(addr, 128);
+			read64_dual_armv7(addr, 384);
+			read64_dual_armv7(addr, 320);
+			read64_dual_armv7(addr,  64);
+			read64_dual_armv7(addr, 192);
+			read64_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read64_dual_armv7(addr,   0);
+			read64_dual_armv7(addr, 256);
+			read64_dual_armv7(addr, 128);
+			read64_dual_armv7(addr, 384);
+			read64_dual_armv7(addr, 320);
+			read64_dual_armv7(addr,  64);
+			read64_dual_armv7(addr, 192);
+			read64_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read64_dual_armv7(addr,   0);
+			read64_dual_armv7(addr, 256);
+			read64_dual_armv7(addr, 128);
+			read64_dual_armv7(addr, 384);
+			read64_dual_armv7(addr, 320);
+			read64_dual_armv7(addr,  64);
+			read64_dual_armv7(addr, 192);
+			read64_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read64_dual_armv7(addr,   0);
+			read64_dual_armv7(addr, 256);
+			read64_dual_armv7(addr, 128);
+			read64_dual_armv7(addr, 384);
+			read64_dual_armv7(addr, 320);
+			read64_dual_armv7(addr,  64);
+			read64_dual_armv7(addr, 192);
+			read64_dual_armv7(addr, 448);
 		}
 	}
 	return rounds;
