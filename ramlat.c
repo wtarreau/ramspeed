@@ -1266,21 +1266,38 @@ unsigned int run512_sse(void *area, size_t mask)
 #endif
 
 #if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
-static inline void read512_vfp(const char *addr, const unsigned long ofs)
+static inline void read512_dual_vfp(const char *addr, const unsigned long ofs)
 {
-	asm volatile("vldr %%d4, [%0,%1]\n\t"
-	             "vldr %%d5, [%0,%1+8]\n\t"
-	             "vldr %%d6, [%0,%1+16]\n\t"
-	             "vldr %%d7, [%0,%1+24]\n\t"
+	asm volatile("vldr %%d0, [%0,%1]\n\t"
+	             "vldr %%d1, [%0,%1+8]\n\t"
+	             "vldr %%d2, [%0,%1+16]\n\t"
+	             "vldr %%d3, [%0,%1+24]\n\t"
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
-	             : "%d4", "%d5", "%d6", "%d7");
+	             : "%d0", "%d0", "%d0", "%d0");
+
 	asm volatile("vldr %%d4, [%0,%1+32]\n\t"
 	             "vldr %%d5, [%0,%1+40]\n\t"
 	             "vldr %%d6, [%0,%1+48]\n\t"
 	             "vldr %%d7, [%0,%1+56]\n\t"
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5", "%d6", "%d7");
+
+	asm volatile("vldr %%d0, [%0,%1]\n\t"
+	             "vldr %%d1, [%0,%1+8]\n\t"
+	             "vldr %%d2, [%0,%1+16]\n\t"
+	             "vldr %%d3, [%0,%1+24]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs + 512)
+	             : "%d0", "%d0", "%d0", "%d0");
+
+	asm volatile("vldr %%d4, [%0,%1+32]\n\t"
+	             "vldr %%d5, [%0,%1+40]\n\t"
+	             "vldr %%d6, [%0,%1+48]\n\t"
+	             "vldr %%d7, [%0,%1+56]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs + 512)
 	             : "%d4", "%d5", "%d6", "%d7");
 }
 
@@ -1302,38 +1319,47 @@ unsigned int run512_vfp(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read512_vfp(addr + 0000,   0); read512_vfp(addr + 0000, 512 +   0);
-			read512_vfp(addr + 0000, 256); read512_vfp(addr + 0000, 512 + 256);
-			read512_vfp(addr + 0000, 128); read512_vfp(addr + 0000, 512 + 128);
-			read512_vfp(addr + 0000, 384); read512_vfp(addr + 0000, 512 + 384);
-			read512_vfp(addr + 0000, 320); read512_vfp(addr + 0000, 512 + 320);
-			read512_vfp(addr + 0000,  64); read512_vfp(addr + 0000, 512 +  64);
-			read512_vfp(addr + 0000, 192); read512_vfp(addr + 0000, 512 + 192);
-			read512_vfp(addr + 0000, 448); read512_vfp(addr + 0000, 512 + 448);
-			read512_vfp(addr + 1024,   0); read512_vfp(addr + 1024, 512 +   0);
-			read512_vfp(addr + 1024, 256); read512_vfp(addr + 1024, 512 + 256);
-			read512_vfp(addr + 1024, 128); read512_vfp(addr + 1024, 512 + 128);
-			read512_vfp(addr + 1024, 384); read512_vfp(addr + 1024, 512 + 384);
-			read512_vfp(addr + 1024, 320); read512_vfp(addr + 1024, 512 + 320);
-			read512_vfp(addr + 1024,  64); read512_vfp(addr + 1024, 512 +  64);
-			read512_vfp(addr + 1024, 192); read512_vfp(addr + 1024, 512 + 192);
-			read512_vfp(addr + 1024, 448); read512_vfp(addr + 1024, 512 + 448);
-			read512_vfp(addr + 2048,   0); read512_vfp(addr + 2048, 512 +   0);
-			read512_vfp(addr + 2048, 256); read512_vfp(addr + 2048, 512 + 256);
-			read512_vfp(addr + 2048, 128); read512_vfp(addr + 2048, 512 + 128);
-			read512_vfp(addr + 2048, 384); read512_vfp(addr + 2048, 512 + 384);
-			read512_vfp(addr + 2048, 320); read512_vfp(addr + 2048, 512 + 320);
-			read512_vfp(addr + 2048,  64); read512_vfp(addr + 2048, 512 +  64);
-			read512_vfp(addr + 2048, 192); read512_vfp(addr + 2048, 512 + 192);
-			read512_vfp(addr + 2048, 448); read512_vfp(addr + 2048, 512 + 448);
-			read512_vfp(addr + 3072,   0); read512_vfp(addr + 3072, 512 +   0);
-			read512_vfp(addr + 3072, 256); read512_vfp(addr + 3072, 512 + 256);
-			read512_vfp(addr + 3072, 128); read512_vfp(addr + 3072, 512 + 128);
-			read512_vfp(addr + 3072, 384); read512_vfp(addr + 3072, 512 + 384);
-			read512_vfp(addr + 3072, 320); read512_vfp(addr + 3072, 512 + 320);
-			read512_vfp(addr + 3072,  64); read512_vfp(addr + 3072, 512 +  64);
-			read512_vfp(addr + 3072, 192); read512_vfp(addr + 3072, 512 + 192);
-			read512_vfp(addr + 3072, 448); read512_vfp(addr + 3072, 512 + 448);
+			read512_dual_vfp(addr,   0);
+			read512_dual_vfp(addr, 128);
+			read512_dual_vfp(addr, 256);
+			read512_dual_vfp(addr, 384);
+			read512_dual_vfp(addr,  64);
+			read512_dual_vfp(addr, 192);
+			read512_dual_vfp(addr, 320);
+			read512_dual_vfp(addr, 448);
+
+			addr += 1024;
+
+			read512_dual_vfp(addr,   0);
+			read512_dual_vfp(addr, 128);
+			read512_dual_vfp(addr, 256);
+			read512_dual_vfp(addr, 384);
+			read512_dual_vfp(addr,  64);
+			read512_dual_vfp(addr, 192);
+			read512_dual_vfp(addr, 320);
+			read512_dual_vfp(addr, 448);
+
+			addr += 1024;
+
+			read512_dual_vfp(addr,   0);
+			read512_dual_vfp(addr, 128);
+			read512_dual_vfp(addr, 256);
+			read512_dual_vfp(addr, 384);
+			read512_dual_vfp(addr,  64);
+			read512_dual_vfp(addr, 192);
+			read512_dual_vfp(addr, 320);
+			read512_dual_vfp(addr, 448);
+
+			addr += 1024;
+
+			read512_dual_vfp(addr,   0);
+			read512_dual_vfp(addr, 128);
+			read512_dual_vfp(addr, 256);
+			read512_dual_vfp(addr, 384);
+			read512_dual_vfp(addr,  64);
+			read512_dual_vfp(addr, 192);
+			read512_dual_vfp(addr, 320);
+			read512_dual_vfp(addr, 448);
 		}
 	}
 	return rounds;
