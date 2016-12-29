@@ -10,7 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
+#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || defined(__x86_64__)
 #define HAS_MANY_REGISTERS 0
 #else
 #define HAS_MANY_REGISTERS 1
