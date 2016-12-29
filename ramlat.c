@@ -1367,10 +1367,12 @@ unsigned int run512_vfp(void *area, size_t mask)
 #endif
 
 #if defined(__ARM_ARCH_7A__)
-static inline void read512_armv7(const char *addr, const unsigned long ofs)
+static inline void read512_dual_armv7(const char *addr, const unsigned long ofs)
 {
 	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
 	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs + 32) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs + 512 + 0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs + 512 + 32) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
 }
 
 /* runs the 512-bit test, returns the number of rounds */
@@ -1391,38 +1393,47 @@ unsigned int run512_armv7(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read512_armv7(addr + 0000,   0); read512_armv7(addr + 0000, 512 +   0);
-			read512_armv7(addr + 0000, 256); read512_armv7(addr + 0000, 512 + 256);
-			read512_armv7(addr + 0000, 128); read512_armv7(addr + 0000, 512 + 128);
-			read512_armv7(addr + 0000, 384); read512_armv7(addr + 0000, 512 + 384);
-			read512_armv7(addr + 0000, 320); read512_armv7(addr + 0000, 512 + 320);
-			read512_armv7(addr + 0000,  64); read512_armv7(addr + 0000, 512 +  64);
-			read512_armv7(addr + 0000, 192); read512_armv7(addr + 0000, 512 + 192);
-			read512_armv7(addr + 0000, 448); read512_armv7(addr + 0000, 512 + 448);
-			read512_armv7(addr + 1024,   0); read512_armv7(addr + 1024, 512 +   0);
-			read512_armv7(addr + 1024, 256); read512_armv7(addr + 1024, 512 + 256);
-			read512_armv7(addr + 1024, 128); read512_armv7(addr + 1024, 512 + 128);
-			read512_armv7(addr + 1024, 384); read512_armv7(addr + 1024, 512 + 384);
-			read512_armv7(addr + 1024, 320); read512_armv7(addr + 1024, 512 + 320);
-			read512_armv7(addr + 1024,  64); read512_armv7(addr + 1024, 512 +  64);
-			read512_armv7(addr + 1024, 192); read512_armv7(addr + 1024, 512 + 192);
-			read512_armv7(addr + 1024, 448); read512_armv7(addr + 1024, 512 + 448);
-			read512_armv7(addr + 2048,   0); read512_armv7(addr + 2048, 512 +   0);
-			read512_armv7(addr + 2048, 256); read512_armv7(addr + 2048, 512 + 256);
-			read512_armv7(addr + 2048, 128); read512_armv7(addr + 2048, 512 + 128);
-			read512_armv7(addr + 2048, 384); read512_armv7(addr + 2048, 512 + 384);
-			read512_armv7(addr + 2048, 320); read512_armv7(addr + 2048, 512 + 320);
-			read512_armv7(addr + 2048,  64); read512_armv7(addr + 2048, 512 +  64);
-			read512_armv7(addr + 2048, 192); read512_armv7(addr + 2048, 512 + 192);
-			read512_armv7(addr + 2048, 448); read512_armv7(addr + 2048, 512 + 448);
-			read512_armv7(addr + 3072,   0); read512_armv7(addr + 3072, 512 +   0);
-			read512_armv7(addr + 3072, 256); read512_armv7(addr + 3072, 512 + 256);
-			read512_armv7(addr + 3072, 128); read512_armv7(addr + 3072, 512 + 128);
-			read512_armv7(addr + 3072, 384); read512_armv7(addr + 3072, 512 + 384);
-			read512_armv7(addr + 3072, 320); read512_armv7(addr + 3072, 512 + 320);
-			read512_armv7(addr + 3072,  64); read512_armv7(addr + 3072, 512 +  64);
-			read512_armv7(addr + 3072, 192); read512_armv7(addr + 3072, 512 + 192);
-			read512_armv7(addr + 3072, 448); read512_armv7(addr + 3072, 512 + 448);
+			read512_dual_armv7(addr,   0);
+			read512_dual_armv7(addr, 128);
+			read512_dual_armv7(addr, 256);
+			read512_dual_armv7(addr, 384);
+			read512_dual_armv7(addr,  64);
+			read512_dual_armv7(addr, 192);
+			read512_dual_armv7(addr, 320);
+			read512_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read512_dual_armv7(addr,   0);
+			read512_dual_armv7(addr, 128);
+			read512_dual_armv7(addr, 256);
+			read512_dual_armv7(addr, 384);
+			read512_dual_armv7(addr,  64);
+			read512_dual_armv7(addr, 192);
+			read512_dual_armv7(addr, 320);
+			read512_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read512_dual_armv7(addr,   0);
+			read512_dual_armv7(addr, 128);
+			read512_dual_armv7(addr, 256);
+			read512_dual_armv7(addr, 384);
+			read512_dual_armv7(addr,  64);
+			read512_dual_armv7(addr, 192);
+			read512_dual_armv7(addr, 320);
+			read512_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read512_dual_armv7(addr,   0);
+			read512_dual_armv7(addr, 128);
+			read512_dual_armv7(addr, 256);
+			read512_dual_armv7(addr, 384);
+			read512_dual_armv7(addr,  64);
+			read512_dual_armv7(addr, 192);
+			read512_dual_armv7(addr, 320);
+			read512_dual_armv7(addr, 448);
 		}
 	}
 	return rounds;
