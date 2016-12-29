@@ -273,22 +273,6 @@ static inline void read64(const char *addr, const unsigned long ofs)
 
 static inline void read64_dual(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
 {
-#ifdef __SSE4_1__
-	__m128i xmm0, xmm1;
-	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
-	             "0" (_mm_loadl_epi64((void *)(addr + ofs1))),
-	             "1" (_mm_loadl_epi64((void *)(addr + ofs2))));
-#elif defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
-	asm volatile("vldr %%d4, [%0,%1]\n\t"
-	             "vldr %%d5, [%0,%2]\n\t"
-	             : /* no output */
-	             : "r" (addr), "I" (ofs1), "I" (ofs2)
-	             : "%d4", "%d5");
-#elif defined(__ARM_ARCH_7A__)
-	uint32_t r0, r1;
-	asm volatile("ldrd %0, %1, [%2,%3]" : "=r" (r0), "=r" (r1) : "r" (addr), "I" (ofs1));
-	asm volatile("ldrd %0, %1, [%2,%3]" : "=r" (r0), "=r" (r1) : "r" (addr), "I" (ofs2));
-#else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1)), "r" (*(uint64_t *)(addr + ofs2)));
 	}
@@ -296,7 +280,6 @@ static inline void read64_dual(const char *addr, const unsigned long ofs1, const
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs1)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs2)));
 	}
-#endif
 }
 
 /* runs the 64-bit test, returns the number of rounds */
@@ -356,6 +339,207 @@ unsigned int run64_generic(void *area, size_t mask)
 	}
 	return rounds;
 }
+
+
+#ifdef __SSE4_1__
+/* same with two addresses at once */
+static inline void read64_dual_sse(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+{
+	__m128i xmm0, xmm1;
+	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
+	             "0" (_mm_loadl_epi64((void *)(addr + ofs1))),
+	             "1" (_mm_loadl_epi64((void *)(addr + ofs2))));
+}
+
+/* runs the 64-bit test using SSE optimizations, returns the number of rounds */
+unsigned int run64_sse(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read64_dual_sse(addr + 0000,   0, 512 +   0);
+			read64_dual_sse(addr + 0000, 256, 512 + 256);
+			read64_dual_sse(addr + 0000, 128, 512 + 128);
+			read64_dual_sse(addr + 0000, 384, 512 + 384);
+			read64_dual_sse(addr + 0000, 320, 512 + 320);
+			read64_dual_sse(addr + 0000,  64, 512 +  64);
+			read64_dual_sse(addr + 0000, 192, 512 + 192);
+			read64_dual_sse(addr + 0000, 448, 512 + 448);
+			read64_dual_sse(addr + 1024,   0, 512 +   0);
+			read64_dual_sse(addr + 1024, 256, 512 + 256);
+			read64_dual_sse(addr + 1024, 128, 512 + 128);
+			read64_dual_sse(addr + 1024, 384, 512 + 384);
+			read64_dual_sse(addr + 1024, 320, 512 + 320);
+			read64_dual_sse(addr + 1024,  64, 512 +  64);
+			read64_dual_sse(addr + 1024, 192, 512 + 192);
+			read64_dual_sse(addr + 1024, 448, 512 + 448);
+			read64_dual_sse(addr + 2048,   0, 512 +   0);
+			read64_dual_sse(addr + 2048, 256, 512 + 256);
+			read64_dual_sse(addr + 2048, 128, 512 + 128);
+			read64_dual_sse(addr + 2048, 384, 512 + 384);
+			read64_dual_sse(addr + 2048, 320, 512 + 320);
+			read64_dual_sse(addr + 2048,  64, 512 +  64);
+			read64_dual_sse(addr + 2048, 192, 512 + 192);
+			read64_dual_sse(addr + 2048, 448, 512 + 448);
+			read64_dual_sse(addr + 3072,   0, 512 +   0);
+			read64_dual_sse(addr + 3072, 256, 512 + 256);
+			read64_dual_sse(addr + 3072, 128, 512 + 128);
+			read64_dual_sse(addr + 3072, 384, 512 + 384);
+			read64_dual_sse(addr + 3072, 320, 512 + 320);
+			read64_dual_sse(addr + 3072,  64, 512 +  64);
+			read64_dual_sse(addr + 3072, 192, 512 + 192);
+			read64_dual_sse(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
+
+
+#if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+/* same with two addresses at once */
+static inline void read64_dual_vfp(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+{
+	asm volatile("vldr %%d4, [%0,%1]\n\t"
+	             "vldr %%d5, [%0,%2]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs1), "I" (ofs2)
+	             : "%d4", "%d5");
+}
+
+/* runs the 64-bit test using VFP optimizations, returns the number of rounds */
+unsigned int run64_vfp(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read64_dual_vfp(addr + 0000,   0, 512 +   0);
+			read64_dual_vfp(addr + 0000, 256, 512 + 256);
+			read64_dual_vfp(addr + 0000, 128, 512 + 128);
+			read64_dual_vfp(addr + 0000, 384, 512 + 384);
+			read64_dual_vfp(addr + 0000, 320, 512 + 320);
+			read64_dual_vfp(addr + 0000,  64, 512 +  64);
+			read64_dual_vfp(addr + 0000, 192, 512 + 192);
+			read64_dual_vfp(addr + 0000, 448, 512 + 448);
+			read64_dual_vfp(addr + 1024,   0, 512 +   0);
+			read64_dual_vfp(addr + 1024, 256, 512 + 256);
+			read64_dual_vfp(addr + 1024, 128, 512 + 128);
+			read64_dual_vfp(addr + 1024, 384, 512 + 384);
+			read64_dual_vfp(addr + 1024, 320, 512 + 320);
+			read64_dual_vfp(addr + 1024,  64, 512 +  64);
+			read64_dual_vfp(addr + 1024, 192, 512 + 192);
+			read64_dual_vfp(addr + 1024, 448, 512 + 448);
+			read64_dual_vfp(addr + 2048,   0, 512 +   0);
+			read64_dual_vfp(addr + 2048, 256, 512 + 256);
+			read64_dual_vfp(addr + 2048, 128, 512 + 128);
+			read64_dual_vfp(addr + 2048, 384, 512 + 384);
+			read64_dual_vfp(addr + 2048, 320, 512 + 320);
+			read64_dual_vfp(addr + 2048,  64, 512 +  64);
+			read64_dual_vfp(addr + 2048, 192, 512 + 192);
+			read64_dual_vfp(addr + 2048, 448, 512 + 448);
+			read64_dual_vfp(addr + 3072,   0, 512 +   0);
+			read64_dual_vfp(addr + 3072, 256, 512 + 256);
+			read64_dual_vfp(addr + 3072, 128, 512 + 128);
+			read64_dual_vfp(addr + 3072, 384, 512 + 384);
+			read64_dual_vfp(addr + 3072, 320, 512 + 320);
+			read64_dual_vfp(addr + 3072,  64, 512 +  64);
+			read64_dual_vfp(addr + 3072, 192, 512 + 192);
+			read64_dual_vfp(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
+
+
+#if defined(__ARM_ARCH_7A__)
+/* same with two addresses at once */
+static inline void read64_dual_armv7(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+{
+	uint32_t r0, r1;
+	asm volatile("ldrd %0, %1, [%2,%3]" : "=r" (r0), "=r" (r1) : "r" (addr), "I" (ofs1));
+	asm volatile("ldrd %0, %1, [%2,%3]" : "=r" (r0), "=r" (r1) : "r" (addr), "I" (ofs2));
+}
+
+/* runs the 64-bit test using ARMv7 optimizations, returns the number of rounds */
+unsigned int run64_armv7(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read64_dual_armv7(addr + 0000,   0, 512 +   0);
+			read64_dual_armv7(addr + 0000, 256, 512 + 256);
+			read64_dual_armv7(addr + 0000, 128, 512 + 128);
+			read64_dual_armv7(addr + 0000, 384, 512 + 384);
+			read64_dual_armv7(addr + 0000, 320, 512 + 320);
+			read64_dual_armv7(addr + 0000,  64, 512 +  64);
+			read64_dual_armv7(addr + 0000, 192, 512 + 192);
+			read64_dual_armv7(addr + 0000, 448, 512 + 448);
+			read64_dual_armv7(addr + 1024,   0, 512 +   0);
+			read64_dual_armv7(addr + 1024, 256, 512 + 256);
+			read64_dual_armv7(addr + 1024, 128, 512 + 128);
+			read64_dual_armv7(addr + 1024, 384, 512 + 384);
+			read64_dual_armv7(addr + 1024, 320, 512 + 320);
+			read64_dual_armv7(addr + 1024,  64, 512 +  64);
+			read64_dual_armv7(addr + 1024, 192, 512 + 192);
+			read64_dual_armv7(addr + 1024, 448, 512 + 448);
+			read64_dual_armv7(addr + 2048,   0, 512 +   0);
+			read64_dual_armv7(addr + 2048, 256, 512 + 256);
+			read64_dual_armv7(addr + 2048, 128, 512 + 128);
+			read64_dual_armv7(addr + 2048, 384, 512 + 384);
+			read64_dual_armv7(addr + 2048, 320, 512 + 320);
+			read64_dual_armv7(addr + 2048,  64, 512 +  64);
+			read64_dual_armv7(addr + 2048, 192, 512 + 192);
+			read64_dual_armv7(addr + 2048, 448, 512 + 448);
+			read64_dual_armv7(addr + 3072,   0, 512 +   0);
+			read64_dual_armv7(addr + 3072, 256, 512 + 256);
+			read64_dual_armv7(addr + 3072, 128, 512 + 128);
+			read64_dual_armv7(addr + 3072, 384, 512 + 384);
+			read64_dual_armv7(addr + 3072, 320, 512 + 320);
+			read64_dual_armv7(addr + 3072,  64, 512 +  64);
+			read64_dual_armv7(addr + 3072, 192, 512 + 192);
+			read64_dual_armv7(addr + 3072, 448, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
 
 
 /*****************************************************************************
@@ -922,6 +1106,22 @@ int main(int argc, char **argv)
 	run[4] = run128_generic;
 	run[5] = run256_generic;
 	run[6] = run512_generic;
+
+#ifdef __SSE4_1__
+	if (implementation & USE_SSE) {
+		run[3] = run64_sse;
+	}
+#endif
+#if defined(__ARM_ARCH_7A__)
+	if (implementation & USE_ARMV7) {
+		run[3] = run64_armv7;
+	}
+#endif
+#if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+	if (implementation & USE_VFP) {
+		run[3] = run64_vfp;
+	}
+#endif
 
 	area = malloc(size_max + 4096);
 	if ((off_t)area & 4095)
