@@ -980,45 +980,45 @@ unsigned int run256_vfp(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read256_dual_vfp(addr,   0);
-			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 128);
+			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 384);
-			read256_dual_vfp(addr, 320);
 			read256_dual_vfp(addr,  64);
 			read256_dual_vfp(addr, 192);
+			read256_dual_vfp(addr, 320);
 			read256_dual_vfp(addr, 448);
 
 			addr += 1024;
 
 			read256_dual_vfp(addr,   0);
-			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 128);
+			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 384);
-			read256_dual_vfp(addr, 320);
 			read256_dual_vfp(addr,  64);
 			read256_dual_vfp(addr, 192);
+			read256_dual_vfp(addr, 320);
 			read256_dual_vfp(addr, 448);
 
 			addr += 1024;
 
 			read256_dual_vfp(addr,   0);
-			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 128);
+			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 384);
-			read256_dual_vfp(addr, 320);
 			read256_dual_vfp(addr,  64);
 			read256_dual_vfp(addr, 192);
+			read256_dual_vfp(addr, 320);
 			read256_dual_vfp(addr, 448);
 
 			addr += 1024;
 
 			read256_dual_vfp(addr,   0);
-			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 128);
+			read256_dual_vfp(addr, 256);
 			read256_dual_vfp(addr, 384);
-			read256_dual_vfp(addr, 320);
 			read256_dual_vfp(addr,  64);
 			read256_dual_vfp(addr, 192);
+			read256_dual_vfp(addr, 320);
 			read256_dual_vfp(addr, 448);
 		}
 	}
