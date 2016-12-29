@@ -850,7 +850,14 @@ int main(int argc, char **argv)
 			bw = 1;
 		}
 		else {
-			fprintf(stderr, "Usage: prog [-b] [-p] [-s] [-q] [-h] <time> <area>\n");
+			fprintf(stderr,
+				"Usage: prog [options]* <time> <area>\n"
+				"  -b : report equivalent bandwidth in MB/s\n"
+				"  -p : only report performance on a word the size of a pointer\n"
+				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
+				"  -q : quiet : don't show column headers\n"
+				"  -h : show this help\n"
+				"");
 			exit(!!strcmp(argv[1], "-h"));
 		}
 		argc--;
