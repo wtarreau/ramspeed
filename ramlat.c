@@ -870,22 +870,14 @@ unsigned int run256_generic(void *area, size_t mask)
 }
 
 #ifdef __SSE4_1__
-static inline void read256_sse(const char *addr, const unsigned long ofs)
-{
-	__m128i xmm0, xmm1;
-	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
-	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
-	             "1" (_mm_load_si128((void *)(addr + ofs + 16))));
-}
-
-static inline void read256_dual_sse(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+static inline void read256_dual_sse(const char *addr, const unsigned long ofs)
 {
 	__m128i xmm0, xmm1, xmm2, xmm3;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
-	             "0" (_mm_load_si128((void *)(addr + ofs1 +  0))),
-	             "1" (_mm_load_si128((void *)(addr + ofs1 + 16))),
-	             "2" (_mm_load_si128((void *)(addr + ofs2 +  0))),
-	             "3" (_mm_load_si128((void *)(addr + ofs2 + 16))));
+	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
+	             "1" (_mm_load_si128((void *)(addr + ofs + 16))),
+	             "2" (_mm_load_si128((void *)(addr + ofs + 512 +  0))),
+	             "3" (_mm_load_si128((void *)(addr + ofs + 512 + 16))));
 }
 
 /* runs the 256-bit test, returns the number of rounds */
@@ -906,38 +898,47 @@ unsigned int run256_sse(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read256_dual_sse(addr + 0000,   0, 512 +   0);
-			read256_dual_sse(addr + 0000, 256, 512 + 256);
-			read256_dual_sse(addr + 0000, 128, 512 + 128);
-			read256_dual_sse(addr + 0000, 384, 512 + 384);
-			read256_dual_sse(addr + 0000, 320, 512 + 320);
-			read256_dual_sse(addr + 0000,  64, 512 +  64);
-			read256_dual_sse(addr + 0000, 192, 512 + 192);
-			read256_dual_sse(addr + 0000, 448, 512 + 448);
-			read256_dual_sse(addr + 1024,   0, 512 +   0);
-			read256_dual_sse(addr + 1024, 256, 512 + 256);
-			read256_dual_sse(addr + 1024, 128, 512 + 128);
-			read256_dual_sse(addr + 1024, 384, 512 + 384);
-			read256_dual_sse(addr + 1024, 320, 512 + 320);
-			read256_dual_sse(addr + 1024,  64, 512 +  64);
-			read256_dual_sse(addr + 1024, 192, 512 + 192);
-			read256_dual_sse(addr + 1024, 448, 512 + 448);
-			read256_dual_sse(addr + 2048,   0, 512 +   0);
-			read256_dual_sse(addr + 2048, 256, 512 + 256);
-			read256_dual_sse(addr + 2048, 128, 512 + 128);
-			read256_dual_sse(addr + 2048, 384, 512 + 384);
-			read256_dual_sse(addr + 2048, 320, 512 + 320);
-			read256_dual_sse(addr + 2048,  64, 512 +  64);
-			read256_dual_sse(addr + 2048, 192, 512 + 192);
-			read256_dual_sse(addr + 2048, 448, 512 + 448);
-			read256_dual_sse(addr + 3072,   0, 512 +   0);
-			read256_dual_sse(addr + 3072, 256, 512 + 256);
-			read256_dual_sse(addr + 3072, 128, 512 + 128);
-			read256_dual_sse(addr + 3072, 384, 512 + 384);
-			read256_dual_sse(addr + 3072, 320, 512 + 320);
-			read256_dual_sse(addr + 3072,  64, 512 +  64);
-			read256_dual_sse(addr + 3072, 192, 512 + 192);
-			read256_dual_sse(addr + 3072, 448, 512 + 448);
+			read256_dual_sse(addr,   0);
+			read256_dual_sse(addr, 128);
+			read256_dual_sse(addr, 256);
+			read256_dual_sse(addr, 384);
+			read256_dual_sse(addr,  64);
+			read256_dual_sse(addr, 192);
+			read256_dual_sse(addr, 320);
+			read256_dual_sse(addr, 448);
+
+			addr += 1024;
+
+			read256_dual_sse(addr,   0);
+			read256_dual_sse(addr, 128);
+			read256_dual_sse(addr, 256);
+			read256_dual_sse(addr, 384);
+			read256_dual_sse(addr,  64);
+			read256_dual_sse(addr, 192);
+			read256_dual_sse(addr, 320);
+			read256_dual_sse(addr, 448);
+
+			addr += 1024;
+
+			read256_dual_sse(addr,   0);
+			read256_dual_sse(addr, 128);
+			read256_dual_sse(addr, 256);
+			read256_dual_sse(addr, 384);
+			read256_dual_sse(addr,  64);
+			read256_dual_sse(addr, 192);
+			read256_dual_sse(addr, 320);
+			read256_dual_sse(addr, 448);
+
+			addr += 1024;
+
+			read256_dual_sse(addr,   0);
+			read256_dual_sse(addr, 128);
+			read256_dual_sse(addr, 256);
+			read256_dual_sse(addr, 384);
+			read256_dual_sse(addr,  64);
+			read256_dual_sse(addr, 192);
+			read256_dual_sse(addr, 320);
+			read256_dual_sse(addr, 448);
 		}
 	}
 	return rounds;
