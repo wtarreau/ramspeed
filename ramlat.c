@@ -1188,14 +1188,19 @@ unsigned int run512_generic(void *area, size_t mask)
 }
 
 #ifdef __SSE4_1__
-static inline void read512_sse(const char *addr, const unsigned long ofs)
+static inline void read512_dual_sse(const char *addr, const unsigned long ofs)
 {
 	__m128i xmm0, xmm1, xmm2, xmm3;
-	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
+	__m128i xmm4, xmm5, xmm6, xmm7;
+	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3), "=xm" (xmm4), "=xm" (xmm5), "=xm" (xmm6), "=xm" (xmm7) :
 	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
 	             "1" (_mm_load_si128((void *)(addr + ofs + 16))),
 	             "2" (_mm_load_si128((void *)(addr + ofs + 32))),
-	             "3" (_mm_load_si128((void *)(addr + ofs + 48))));
+	             "3" (_mm_load_si128((void *)(addr + ofs + 48))),
+	             "4" (_mm_load_si128((void *)(addr + ofs + 512 +  0))),
+	             "5" (_mm_load_si128((void *)(addr + ofs + 512 + 16))),
+	             "6" (_mm_load_si128((void *)(addr + ofs + 512 + 32))),
+	             "7" (_mm_load_si128((void *)(addr + ofs + 512 + 48))));
 }
 
 /* runs the 512-bit test, returns the number of rounds */
@@ -1216,38 +1221,44 @@ unsigned int run512_sse(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read512_sse(addr + 0000,   0); read512_sse(addr + 0000, 512 +   0);
-			read512_sse(addr + 0000, 256); read512_sse(addr + 0000, 512 + 256);
-			read512_sse(addr + 0000, 128); read512_sse(addr + 0000, 512 + 128);
-			read512_sse(addr + 0000, 384); read512_sse(addr + 0000, 512 + 384);
-			read512_sse(addr + 0000, 320); read512_sse(addr + 0000, 512 + 320);
-			read512_sse(addr + 0000,  64); read512_sse(addr + 0000, 512 +  64);
-			read512_sse(addr + 0000, 192); read512_sse(addr + 0000, 512 + 192);
-			read512_sse(addr + 0000, 448); read512_sse(addr + 0000, 512 + 448);
-			read512_sse(addr + 1024,   0); read512_sse(addr + 1024, 512 +   0);
-			read512_sse(addr + 1024, 256); read512_sse(addr + 1024, 512 + 256);
-			read512_sse(addr + 1024, 128); read512_sse(addr + 1024, 512 + 128);
-			read512_sse(addr + 1024, 384); read512_sse(addr + 1024, 512 + 384);
-			read512_sse(addr + 1024, 320); read512_sse(addr + 1024, 512 + 320);
-			read512_sse(addr + 1024,  64); read512_sse(addr + 1024, 512 +  64);
-			read512_sse(addr + 1024, 192); read512_sse(addr + 1024, 512 + 192);
-			read512_sse(addr + 1024, 448); read512_sse(addr + 1024, 512 + 448);
-			read512_sse(addr + 2048,   0); read512_sse(addr + 2048, 512 +   0);
-			read512_sse(addr + 2048, 256); read512_sse(addr + 2048, 512 + 256);
-			read512_sse(addr + 2048, 128); read512_sse(addr + 2048, 512 + 128);
-			read512_sse(addr + 2048, 384); read512_sse(addr + 2048, 512 + 384);
-			read512_sse(addr + 2048, 320); read512_sse(addr + 2048, 512 + 320);
-			read512_sse(addr + 2048,  64); read512_sse(addr + 2048, 512 +  64);
-			read512_sse(addr + 2048, 192); read512_sse(addr + 2048, 512 + 192);
-			read512_sse(addr + 2048, 448); read512_sse(addr + 2048, 512 + 448);
-			read512_sse(addr + 3072,   0); read512_sse(addr + 3072, 512 +   0);
-			read512_sse(addr + 3072, 256); read512_sse(addr + 3072, 512 + 256);
-			read512_sse(addr + 3072, 128); read512_sse(addr + 3072, 512 + 128);
-			read512_sse(addr + 3072, 384); read512_sse(addr + 3072, 512 + 384);
-			read512_sse(addr + 3072, 320); read512_sse(addr + 3072, 512 + 320);
-			read512_sse(addr + 3072,  64); read512_sse(addr + 3072, 512 +  64);
-			read512_sse(addr + 3072, 192); read512_sse(addr + 3072, 512 + 192);
-			read512_sse(addr + 3072, 448); read512_sse(addr + 3072, 512 + 448);
+			read512_dual_sse(addr,   0);
+			read512_dual_sse(addr, 128);
+			read512_dual_sse(addr, 256);
+			read512_dual_sse(addr, 384);
+			read512_dual_sse(addr,  64);
+			read512_dual_sse(addr, 192);
+			read512_dual_sse(addr, 320);
+			read512_dual_sse(addr, 448);
+
+			addr += 1024;
+			read512_dual_sse(addr,   0);
+			read512_dual_sse(addr, 128);
+			read512_dual_sse(addr, 256);
+			read512_dual_sse(addr, 384);
+			read512_dual_sse(addr,  64);
+			read512_dual_sse(addr, 192);
+			read512_dual_sse(addr, 320);
+			read512_dual_sse(addr, 448);
+
+			addr += 1024;
+			read512_dual_sse(addr,   0);
+			read512_dual_sse(addr, 128);
+			read512_dual_sse(addr, 256);
+			read512_dual_sse(addr, 384);
+			read512_dual_sse(addr,  64);
+			read512_dual_sse(addr, 192);
+			read512_dual_sse(addr, 320);
+			read512_dual_sse(addr, 448);
+
+			addr += 1024;
+			read512_dual_sse(addr,   0);
+			read512_dual_sse(addr, 128);
+			read512_dual_sse(addr, 256);
+			read512_dual_sse(addr, 384);
+			read512_dual_sse(addr,  64);
+			read512_dual_sse(addr, 192);
+			read512_dual_sse(addr, 320);
+			read512_dual_sse(addr, 448);
 		}
 	}
 	return rounds;
