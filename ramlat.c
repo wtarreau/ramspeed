@@ -29,19 +29,14 @@ unsigned int (*run[7])(void *area, size_t mask);
  *                              8-bit accesses                               *
  *****************************************************************************/
 
-static inline void read8(const char *addr, const unsigned long ofs)
-{
-	asm volatile("" : : "r" (*(uint8_t *)(addr + ofs)));
-}
-
-static inline void read8_dual(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+static inline void read8_dual(const char *addr, const unsigned long ofs)
 {
 	if (HAS_MANY_REGISTERS) {
-		asm volatile("" : : "r" (*(uint8_t *)(addr + ofs1)), "r" (*(uint8_t *)(addr + ofs2)));
+		asm volatile("" : : "r" (*(uint8_t *)(addr + ofs)), "r" (*(uint8_t *)(addr + ofs + 512)));
 	}
 	else {
-		asm volatile("" : : "r" (*(uint8_t *)(addr + ofs1)));
-		asm volatile("" : : "r" (*(uint8_t *)(addr + ofs2)));
+		asm volatile("" : : "r" (*(uint8_t *)(addr + ofs)));
+		asm volatile("" : : "r" (*(uint8_t *)(addr + ofs + 512)));
 	}
 }
 
@@ -63,41 +58,47 @@ unsigned int run8_generic(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read8_dual(addr + 0000,   0, 512 +   0);
-			read8_dual(addr + 0000, 256, 512 + 256);
-			read8_dual(addr + 0000, 128, 512 + 128);
-			read8_dual(addr + 0000, 384, 512 + 384);
-			read8_dual(addr + 0000, 320, 512 + 320);
-			read8_dual(addr + 0000,  64, 512 +  64);
-			read8_dual(addr + 0000, 192, 512 + 192);
-			read8_dual(addr + 0000, 448, 512 + 448);
+			read8_dual(addr,   0);
+			read8_dual(addr, 128);
+			read8_dual(addr, 256);
+			read8_dual(addr, 384);
+			read8_dual(addr,  64);
+			read8_dual(addr, 192);
+			read8_dual(addr, 320);
+			read8_dual(addr, 448);
 
-			read8_dual(addr + 1024,   0, 512 +   0);
-			read8_dual(addr + 1024, 256, 512 + 256);
-			read8_dual(addr + 1024, 128, 512 + 128);
-			read8_dual(addr + 1024, 384, 512 + 384);
-			read8_dual(addr + 1024, 320, 512 + 320);
-			read8_dual(addr + 1024,  64, 512 +  64);
-			read8_dual(addr + 1024, 192, 512 + 192);
-			read8_dual(addr + 1024, 448, 512 + 448);
+			addr += 1024;
 
-			read8_dual(addr + 2048,   0, 512 +   0);
-			read8_dual(addr + 2048, 256, 512 + 256);
-			read8_dual(addr + 2048, 128, 512 + 128);
-			read8_dual(addr + 2048, 384, 512 + 384);
-			read8_dual(addr + 2048, 320, 512 + 320);
-			read8_dual(addr + 2048,  64, 512 +  64);
-			read8_dual(addr + 2048, 192, 512 + 192);
-			read8_dual(addr + 2048, 448, 512 + 448);
+			read8_dual(addr,   0);
+			read8_dual(addr, 128);
+			read8_dual(addr, 256);
+			read8_dual(addr, 384);
+			read8_dual(addr,  64);
+			read8_dual(addr, 192);
+			read8_dual(addr, 320);
+			read8_dual(addr, 448);
 
-			read8_dual(addr + 3072,   0, 512 +   0);
-			read8_dual(addr + 3072, 256, 512 + 256);
-			read8_dual(addr + 3072, 128, 512 + 128);
-			read8_dual(addr + 3072, 384, 512 + 384);
-			read8_dual(addr + 3072, 320, 512 + 320);
-			read8_dual(addr + 3072,  64, 512 +  64);
-			read8_dual(addr + 3072, 192, 512 + 192);
-			read8_dual(addr + 3072, 448, 512 + 448);
+			addr += 1024;
+
+			read8_dual(addr,   0);
+			read8_dual(addr, 128);
+			read8_dual(addr, 256);
+			read8_dual(addr, 384);
+			read8_dual(addr,  64);
+			read8_dual(addr, 192);
+			read8_dual(addr, 320);
+			read8_dual(addr, 448);
+
+			addr += 1024;
+
+			read8_dual(addr,   0);
+			read8_dual(addr, 128);
+			read8_dual(addr, 256);
+			read8_dual(addr, 384);
+			read8_dual(addr,  64);
+			read8_dual(addr, 192);
+			read8_dual(addr, 320);
+			read8_dual(addr, 448);
 		}
 	}
 	return rounds;
