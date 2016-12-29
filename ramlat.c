@@ -409,14 +409,15 @@ unsigned int run64_sse(void *area, size_t mask)
 
 
 #if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
-/* same with two addresses at once */
-static inline void read64_dual_vfp(const char *addr, const unsigned long ofs1, const unsigned long ofs2)
+static inline void read64_quad_vfp(const char *addr, const unsigned long ofs)
 {
 	asm volatile("vldr %%d4, [%0,%1]\n\t"
-	             "vldr %%d5, [%0,%2]\n\t"
+	             "vldr %%d5, [%0,%1+512]\n\t"
+		     "vldr %%d6, [%0,%1+256]\n\t"
+	             "vldr %%d7, [%0,%1+768]\n\t"
 	             : /* no output */
-	             : "r" (addr), "I" (ofs1), "I" (ofs2)
-	             : "%d4", "%d5");
+	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5", "%d6", "%d7");
 }
 
 /* runs the 64-bit test using VFP optimizations, returns the number of rounds */
@@ -437,38 +438,31 @@ unsigned int run64_vfp(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read64_dual_vfp(addr + 0000,   0, 512 +   0);
-			read64_dual_vfp(addr + 0000, 256, 512 + 256);
-			read64_dual_vfp(addr + 0000, 128, 512 + 128);
-			read64_dual_vfp(addr + 0000, 384, 512 + 384);
-			read64_dual_vfp(addr + 0000, 320, 512 + 320);
-			read64_dual_vfp(addr + 0000,  64, 512 +  64);
-			read64_dual_vfp(addr + 0000, 192, 512 + 192);
-			read64_dual_vfp(addr + 0000, 448, 512 + 448);
-			read64_dual_vfp(addr + 1024,   0, 512 +   0);
-			read64_dual_vfp(addr + 1024, 256, 512 + 256);
-			read64_dual_vfp(addr + 1024, 128, 512 + 128);
-			read64_dual_vfp(addr + 1024, 384, 512 + 384);
-			read64_dual_vfp(addr + 1024, 320, 512 + 320);
-			read64_dual_vfp(addr + 1024,  64, 512 +  64);
-			read64_dual_vfp(addr + 1024, 192, 512 + 192);
-			read64_dual_vfp(addr + 1024, 448, 512 + 448);
-			read64_dual_vfp(addr + 2048,   0, 512 +   0);
-			read64_dual_vfp(addr + 2048, 256, 512 + 256);
-			read64_dual_vfp(addr + 2048, 128, 512 + 128);
-			read64_dual_vfp(addr + 2048, 384, 512 + 384);
-			read64_dual_vfp(addr + 2048, 320, 512 + 320);
-			read64_dual_vfp(addr + 2048,  64, 512 +  64);
-			read64_dual_vfp(addr + 2048, 192, 512 + 192);
-			read64_dual_vfp(addr + 2048, 448, 512 + 448);
-			read64_dual_vfp(addr + 3072,   0, 512 +   0);
-			read64_dual_vfp(addr + 3072, 256, 512 + 256);
-			read64_dual_vfp(addr + 3072, 128, 512 + 128);
-			read64_dual_vfp(addr + 3072, 384, 512 + 384);
-			read64_dual_vfp(addr + 3072, 320, 512 + 320);
-			read64_dual_vfp(addr + 3072,  64, 512 +  64);
-			read64_dual_vfp(addr + 3072, 192, 512 + 192);
-			read64_dual_vfp(addr + 3072, 448, 512 + 448);
+			read64_quad_vfp(addr,   0);
+			read64_quad_vfp(addr, 128);
+			read64_quad_vfp(addr,  64);
+			read64_quad_vfp(addr, 192);
+
+			addr += 1024;
+
+			read64_quad_vfp(addr,   0);
+			read64_quad_vfp(addr, 128);
+			read64_quad_vfp(addr,  64);
+			read64_quad_vfp(addr, 192);
+
+			addr += 1024;
+
+			read64_quad_vfp(addr,   0);
+			read64_quad_vfp(addr, 128);
+			read64_quad_vfp(addr,  64);
+			read64_quad_vfp(addr, 192);
+
+			addr += 1024;
+
+			read64_quad_vfp(addr,   0);
+			read64_quad_vfp(addr, 128);
+			read64_quad_vfp(addr,  64);
+			read64_quad_vfp(addr, 192);
 		}
 	}
 	return rounds;
