@@ -1,4 +1,4 @@
-#ifdef __SSE4_1__
+#ifdef __SSE2__
 #include <x86intrin.h>
 #endif
 
@@ -345,7 +345,7 @@ unsigned int run64_generic(void *area, size_t mask)
 }
 
 
-#ifdef __SSE4_1__
+#ifdef __SSE2__
 static inline void read64_dual_sse(const char *addr, const unsigned long ofs)
 {
 	__m128i xmm0, xmm1;
@@ -640,7 +640,7 @@ unsigned int run128_generic(void *area, size_t mask)
 }
 
 
-#ifdef __SSE4_1__
+#ifdef __SSE2__
 static inline void read128_dual_sse(const char *addr, const unsigned long ofs)
 {
 	__m128i xmm0, xmm1;
@@ -954,7 +954,7 @@ unsigned int run256_generic(void *area, size_t mask)
 	return rounds;
 }
 
-#ifdef __SSE4_1__
+#ifdef __SSE2__
 static inline void read256_dual_sse(const char *addr, const unsigned long ofs)
 {
 	__m128i xmm0, xmm1, xmm2, xmm3;
@@ -1272,7 +1272,7 @@ unsigned int run512_generic(void *area, size_t mask)
 	return rounds;
 }
 
-#ifdef __SSE4_1__
+#ifdef __SSE2__
 static inline void read512_dual_sse(const char *addr, const unsigned long ofs)
 {
 	__m128i xmm0, xmm1, xmm2, xmm3;
@@ -1639,6 +1639,9 @@ int main(int argc, char **argv)
 	/* set default implementation bits */
 	implementation = USE_GENERIC;
 #ifdef __SSE4_1__
+	/* don't enable it by default when there's only SSE2, as it's slower
+	 * than generic.
+	 */
 	implementation |= USE_SSE;
 #endif
 #if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
@@ -1667,7 +1670,7 @@ int main(int argc, char **argv)
 		else if (strcmp(argv[1], "-G") == 0) {
 			implementation = USE_GENERIC;
 		}
-#ifdef __SSE4_1__
+#ifdef __SSE2__
 		else if (strcmp(argv[1], "-S") == 0) {
 			implementation = USE_SSE;
 		}
@@ -1691,7 +1694,7 @@ int main(int argc, char **argv)
 				"  -q : quiet : don't show column headers\n"
 				"  -h : show this help\n"
 				"  -G : use generic code only\n"
-#ifdef __SSE4_1__
+#ifdef __SSE2__
 				"  -S : use SSE\n"
 #endif
 #if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
@@ -1721,7 +1724,7 @@ int main(int argc, char **argv)
 	run[5] = run256_generic;
 	run[6] = run512_generic;
 
-#ifdef __SSE4_1__
+#ifdef __SSE2__
 	if (implementation & USE_SSE) {
 		run[3] = run64_sse;
 		run[4] = run128_sse;
