@@ -780,6 +780,93 @@ unsigned int run128_vfp(void *area, size_t mask)
 }
 #endif
 
+#if defined(__ARM_ARCH_7A__)
+static inline void read128_dual_armv7(const char *addr, const unsigned long ofs)
+{
+#ifdef __thumb2__
+	asm volatile("ldrd %%r0, %%r1, [%0,%1]\n\t"
+	             "ldrd %%r2, %%r3, [%0,%1+8]\n\t"
+	             "ldrd %%r0, %%r1, [%0,%1+512]\n\t"
+	             "ldrd %%r2, %%r3, [%0,%1+512+8]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "r0", "r1", "r2", "r3");
+#else
+	asm volatile("ldrd %%r0, %%r1, [%0]\n\t"
+	             "ldrd %%r2, %%r3, [%0,#8]\n\t"
+	             "ldrd %%r0, %%r1, [%1]\n\t"
+	             "ldrd %%r2, %%r3, [%1,#8]\n\t"
+	             : /* no output */
+	             : "r" (addr + ofs), "r" (addr + ofs + 512)
+	             : "r0", "r1", "r2", "r3");
+#endif
+}
+
+/* runs the 128-bit test, returns the number of rounds */
+unsigned int run128_armv7(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read128_dual_armv7(addr,   0);
+			read128_dual_armv7(addr, 128);
+			read128_dual_armv7(addr, 256);
+			read128_dual_armv7(addr, 384);
+			read128_dual_armv7(addr,  64);
+			read128_dual_armv7(addr, 192);
+			read128_dual_armv7(addr, 320);
+			read128_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read128_dual_armv7(addr,   0);
+			read128_dual_armv7(addr, 128);
+			read128_dual_armv7(addr, 256);
+			read128_dual_armv7(addr, 384);
+			read128_dual_armv7(addr,  64);
+			read128_dual_armv7(addr, 192);
+			read128_dual_armv7(addr, 320);
+			read128_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read128_dual_armv7(addr,   0);
+			read128_dual_armv7(addr, 128);
+			read128_dual_armv7(addr, 256);
+			read128_dual_armv7(addr, 384);
+			read128_dual_armv7(addr,  64);
+			read128_dual_armv7(addr, 192);
+			read128_dual_armv7(addr, 320);
+			read128_dual_armv7(addr, 448);
+
+			addr += 1024;
+
+			read128_dual_armv7(addr,   0);
+			read128_dual_armv7(addr, 128);
+			read128_dual_armv7(addr, 256);
+			read128_dual_armv7(addr, 384);
+			read128_dual_armv7(addr,  64);
+			read128_dual_armv7(addr, 192);
+			read128_dual_armv7(addr, 320);
+			read128_dual_armv7(addr, 448);
+		}
+	}
+	return rounds;
+}
+#endif
+
 
 /*****************************************************************************
  *                             256-bit accesses                              *
@@ -1647,6 +1734,7 @@ int main(int argc, char **argv)
 #if defined(__ARM_ARCH_7A__)
 	if (implementation & USE_ARMV7) {
 		run[3] = run64_armv7;
+		run[4] = run128_armv7;
 		run[5] = run256_armv7;
 		run[6] = run512_armv7;
 	}
