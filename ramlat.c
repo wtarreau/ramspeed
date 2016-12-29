@@ -821,6 +821,10 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 	return rounds / usec;
 }
 
+#define USE_GENERIC 0
+#define USE_SSE     1
+#define USE_VFP     2
+#define USE_ARMV7   4
 
 int main(int argc, char **argv)
 {
@@ -832,6 +836,19 @@ int main(int argc, char **argv)
 	int quiet = 0;
 	int slowstart = 0;
 	int bw = 0;
+	int implementation;
+
+	/* set default implementation bits */
+	implementation = USE_GENERIC;
+#ifdef __SSE4_1__
+	implementation |= USE_SSE;
+#endif
+#if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+	implementation |= USE_VFP;
+#endif
+#if defined(__ARM_ARCH_7A__)
+	implementation |= USE_ARMV7;
+#endif
 
 	usec = 100000;
 	size_max = 16 * 1048576;
@@ -849,6 +866,24 @@ int main(int argc, char **argv)
 		else if (strcmp(argv[1], "-b") == 0) {
 			bw = 1;
 		}
+		else if (strcmp(argv[1], "-G") == 0) {
+			implementation = USE_GENERIC;
+		}
+#ifdef __SSE4_1__
+		else if (strcmp(argv[1], "-S") == 0) {
+			implementation = USE_SSE;
+		}
+#endif
+#if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+		else if (strcmp(argv[1], "-V") == 0) {
+			implementation = USE_VFP;
+		}
+#endif
+#if defined(__ARM_ARCH_7A__)
+		else if (strcmp(argv[1], "-7") == 0) {
+			implementation = USE_ARMV7;
+		}
+#endif
 		else {
 			fprintf(stderr,
 				"Usage: prog [options]* <time> <area>\n"
@@ -857,6 +892,16 @@ int main(int argc, char **argv)
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
 				"  -q : quiet : don't show column headers\n"
 				"  -h : show this help\n"
+				"  -G : use generic code only\n"
+#ifdef __SSE4_1__
+				"  -S : use SSE\n"
+#endif
+#if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+				"  -V : use VFP\n"
+#endif
+#if defined(__ARM_ARCH_7A__)
+				"  -7 : use ARMv7\n"
+#endif
 				"");
 			exit(!!strcmp(argv[1], "-h"));
 		}
