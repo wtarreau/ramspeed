@@ -1116,32 +1116,6 @@ unsigned int run256_armv7(void *area, size_t mask)
 
 static inline void read512(const char *addr, const unsigned long ofs)
 {
-#ifdef __SSE4_1__
-	__m128i xmm0, xmm1, xmm2, xmm3;
-	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
-	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
-	             "1" (_mm_load_si128((void *)(addr + ofs + 16))),
-	             "2" (_mm_load_si128((void *)(addr + ofs + 32))),
-	             "3" (_mm_load_si128((void *)(addr + ofs + 48))));
-#elif defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
-	asm volatile("vldr %%d4, [%0,%1]\n\t"
-	             "vldr %%d5, [%0,%1+8]\n\t"
-	             "vldr %%d6, [%0,%1+16]\n\t"
-	             "vldr %%d7, [%0,%1+24]\n\t"
-	             : /* no output */
-	             : "r" (addr), "I" (ofs)
-	             : "%d4", "%d5", "%d6", "%d7");
-	asm volatile("vldr %%d4, [%0,%1+32]\n\t"
-	             "vldr %%d5, [%0,%1+40]\n\t"
-	             "vldr %%d6, [%0,%1+48]\n\t"
-	             "vldr %%d7, [%0,%1+56]\n\t"
-	             : /* no output */
-	             : "r" (addr), "I" (ofs)
-	             : "%d4", "%d5", "%d6", "%d7");
-#elif defined(__ARM_ARCH_7A__)
-	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
-	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs + 32) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
-#else
 	if (HAS_MANY_REGISTERS) {
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs +  0)), "r" (*(uint64_t *)(addr + ofs +  8)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 16)), "r" (*(uint64_t *)(addr + ofs + 24)));
@@ -1158,7 +1132,6 @@ static inline void read512(const char *addr, const unsigned long ofs)
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 48)));
 		asm volatile("" : : "r" (*(uint64_t *)(addr + ofs + 56)));
 	}
-#endif /* __SSE2__ */
 }
 
 /* runs the 512-bit test, returns the number of rounds */
@@ -1218,6 +1191,211 @@ unsigned int run512_generic(void *area, size_t mask)
 	}
 	return rounds;
 }
+
+#ifdef __SSE4_1__
+static inline void read512_sse(const char *addr, const unsigned long ofs)
+{
+	__m128i xmm0, xmm1, xmm2, xmm3;
+	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
+	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
+	             "1" (_mm_load_si128((void *)(addr + ofs + 16))),
+	             "2" (_mm_load_si128((void *)(addr + ofs + 32))),
+	             "3" (_mm_load_si128((void *)(addr + ofs + 48))));
+}
+
+/* runs the 512-bit test, returns the number of rounds */
+unsigned int run512_sse(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read512_sse(addr + 0000,   0); read512_sse(addr + 0000, 512 +   0);
+			read512_sse(addr + 0000, 256); read512_sse(addr + 0000, 512 + 256);
+			read512_sse(addr + 0000, 128); read512_sse(addr + 0000, 512 + 128);
+			read512_sse(addr + 0000, 384); read512_sse(addr + 0000, 512 + 384);
+			read512_sse(addr + 0000, 320); read512_sse(addr + 0000, 512 + 320);
+			read512_sse(addr + 0000,  64); read512_sse(addr + 0000, 512 +  64);
+			read512_sse(addr + 0000, 192); read512_sse(addr + 0000, 512 + 192);
+			read512_sse(addr + 0000, 448); read512_sse(addr + 0000, 512 + 448);
+			read512_sse(addr + 1024,   0); read512_sse(addr + 1024, 512 +   0);
+			read512_sse(addr + 1024, 256); read512_sse(addr + 1024, 512 + 256);
+			read512_sse(addr + 1024, 128); read512_sse(addr + 1024, 512 + 128);
+			read512_sse(addr + 1024, 384); read512_sse(addr + 1024, 512 + 384);
+			read512_sse(addr + 1024, 320); read512_sse(addr + 1024, 512 + 320);
+			read512_sse(addr + 1024,  64); read512_sse(addr + 1024, 512 +  64);
+			read512_sse(addr + 1024, 192); read512_sse(addr + 1024, 512 + 192);
+			read512_sse(addr + 1024, 448); read512_sse(addr + 1024, 512 + 448);
+			read512_sse(addr + 2048,   0); read512_sse(addr + 2048, 512 +   0);
+			read512_sse(addr + 2048, 256); read512_sse(addr + 2048, 512 + 256);
+			read512_sse(addr + 2048, 128); read512_sse(addr + 2048, 512 + 128);
+			read512_sse(addr + 2048, 384); read512_sse(addr + 2048, 512 + 384);
+			read512_sse(addr + 2048, 320); read512_sse(addr + 2048, 512 + 320);
+			read512_sse(addr + 2048,  64); read512_sse(addr + 2048, 512 +  64);
+			read512_sse(addr + 2048, 192); read512_sse(addr + 2048, 512 + 192);
+			read512_sse(addr + 2048, 448); read512_sse(addr + 2048, 512 + 448);
+			read512_sse(addr + 3072,   0); read512_sse(addr + 3072, 512 +   0);
+			read512_sse(addr + 3072, 256); read512_sse(addr + 3072, 512 + 256);
+			read512_sse(addr + 3072, 128); read512_sse(addr + 3072, 512 + 128);
+			read512_sse(addr + 3072, 384); read512_sse(addr + 3072, 512 + 384);
+			read512_sse(addr + 3072, 320); read512_sse(addr + 3072, 512 + 320);
+			read512_sse(addr + 3072,  64); read512_sse(addr + 3072, 512 +  64);
+			read512_sse(addr + 3072, 192); read512_sse(addr + 3072, 512 + 192);
+			read512_sse(addr + 3072, 448); read512_sse(addr + 3072, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
+
+#if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
+static inline void read512_vfp(const char *addr, const unsigned long ofs)
+{
+	asm volatile("vldr %%d4, [%0,%1]\n\t"
+	             "vldr %%d5, [%0,%1+8]\n\t"
+	             "vldr %%d6, [%0,%1+16]\n\t"
+	             "vldr %%d7, [%0,%1+24]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5", "%d6", "%d7");
+	asm volatile("vldr %%d4, [%0,%1+32]\n\t"
+	             "vldr %%d5, [%0,%1+40]\n\t"
+	             "vldr %%d6, [%0,%1+48]\n\t"
+	             "vldr %%d7, [%0,%1+56]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "%d4", "%d5", "%d6", "%d7");
+}
+
+/* runs the 512-bit test, returns the number of rounds */
+unsigned int run512_vfp(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read512_vfp(addr + 0000,   0); read512_vfp(addr + 0000, 512 +   0);
+			read512_vfp(addr + 0000, 256); read512_vfp(addr + 0000, 512 + 256);
+			read512_vfp(addr + 0000, 128); read512_vfp(addr + 0000, 512 + 128);
+			read512_vfp(addr + 0000, 384); read512_vfp(addr + 0000, 512 + 384);
+			read512_vfp(addr + 0000, 320); read512_vfp(addr + 0000, 512 + 320);
+			read512_vfp(addr + 0000,  64); read512_vfp(addr + 0000, 512 +  64);
+			read512_vfp(addr + 0000, 192); read512_vfp(addr + 0000, 512 + 192);
+			read512_vfp(addr + 0000, 448); read512_vfp(addr + 0000, 512 + 448);
+			read512_vfp(addr + 1024,   0); read512_vfp(addr + 1024, 512 +   0);
+			read512_vfp(addr + 1024, 256); read512_vfp(addr + 1024, 512 + 256);
+			read512_vfp(addr + 1024, 128); read512_vfp(addr + 1024, 512 + 128);
+			read512_vfp(addr + 1024, 384); read512_vfp(addr + 1024, 512 + 384);
+			read512_vfp(addr + 1024, 320); read512_vfp(addr + 1024, 512 + 320);
+			read512_vfp(addr + 1024,  64); read512_vfp(addr + 1024, 512 +  64);
+			read512_vfp(addr + 1024, 192); read512_vfp(addr + 1024, 512 + 192);
+			read512_vfp(addr + 1024, 448); read512_vfp(addr + 1024, 512 + 448);
+			read512_vfp(addr + 2048,   0); read512_vfp(addr + 2048, 512 +   0);
+			read512_vfp(addr + 2048, 256); read512_vfp(addr + 2048, 512 + 256);
+			read512_vfp(addr + 2048, 128); read512_vfp(addr + 2048, 512 + 128);
+			read512_vfp(addr + 2048, 384); read512_vfp(addr + 2048, 512 + 384);
+			read512_vfp(addr + 2048, 320); read512_vfp(addr + 2048, 512 + 320);
+			read512_vfp(addr + 2048,  64); read512_vfp(addr + 2048, 512 +  64);
+			read512_vfp(addr + 2048, 192); read512_vfp(addr + 2048, 512 + 192);
+			read512_vfp(addr + 2048, 448); read512_vfp(addr + 2048, 512 + 448);
+			read512_vfp(addr + 3072,   0); read512_vfp(addr + 3072, 512 +   0);
+			read512_vfp(addr + 3072, 256); read512_vfp(addr + 3072, 512 + 256);
+			read512_vfp(addr + 3072, 128); read512_vfp(addr + 3072, 512 + 128);
+			read512_vfp(addr + 3072, 384); read512_vfp(addr + 3072, 512 + 384);
+			read512_vfp(addr + 3072, 320); read512_vfp(addr + 3072, 512 + 320);
+			read512_vfp(addr + 3072,  64); read512_vfp(addr + 3072, 512 +  64);
+			read512_vfp(addr + 3072, 192); read512_vfp(addr + 3072, 512 + 192);
+			read512_vfp(addr + 3072, 448); read512_vfp(addr + 3072, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
+
+#if defined(__ARM_ARCH_7A__)
+static inline void read512_armv7(const char *addr, const unsigned long ofs)
+{
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs +  0) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs + 32) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+}
+
+/* runs the 512-bit test, returns the number of rounds */
+unsigned int run512_armv7(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64 + 1) * 257 * 4096UL); rnd -= 257 * 4096;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read512_armv7(addr + 0000,   0); read512_armv7(addr + 0000, 512 +   0);
+			read512_armv7(addr + 0000, 256); read512_armv7(addr + 0000, 512 + 256);
+			read512_armv7(addr + 0000, 128); read512_armv7(addr + 0000, 512 + 128);
+			read512_armv7(addr + 0000, 384); read512_armv7(addr + 0000, 512 + 384);
+			read512_armv7(addr + 0000, 320); read512_armv7(addr + 0000, 512 + 320);
+			read512_armv7(addr + 0000,  64); read512_armv7(addr + 0000, 512 +  64);
+			read512_armv7(addr + 0000, 192); read512_armv7(addr + 0000, 512 + 192);
+			read512_armv7(addr + 0000, 448); read512_armv7(addr + 0000, 512 + 448);
+			read512_armv7(addr + 1024,   0); read512_armv7(addr + 1024, 512 +   0);
+			read512_armv7(addr + 1024, 256); read512_armv7(addr + 1024, 512 + 256);
+			read512_armv7(addr + 1024, 128); read512_armv7(addr + 1024, 512 + 128);
+			read512_armv7(addr + 1024, 384); read512_armv7(addr + 1024, 512 + 384);
+			read512_armv7(addr + 1024, 320); read512_armv7(addr + 1024, 512 + 320);
+			read512_armv7(addr + 1024,  64); read512_armv7(addr + 1024, 512 +  64);
+			read512_armv7(addr + 1024, 192); read512_armv7(addr + 1024, 512 + 192);
+			read512_armv7(addr + 1024, 448); read512_armv7(addr + 1024, 512 + 448);
+			read512_armv7(addr + 2048,   0); read512_armv7(addr + 2048, 512 +   0);
+			read512_armv7(addr + 2048, 256); read512_armv7(addr + 2048, 512 + 256);
+			read512_armv7(addr + 2048, 128); read512_armv7(addr + 2048, 512 + 128);
+			read512_armv7(addr + 2048, 384); read512_armv7(addr + 2048, 512 + 384);
+			read512_armv7(addr + 2048, 320); read512_armv7(addr + 2048, 512 + 320);
+			read512_armv7(addr + 2048,  64); read512_armv7(addr + 2048, 512 +  64);
+			read512_armv7(addr + 2048, 192); read512_armv7(addr + 2048, 512 + 192);
+			read512_armv7(addr + 2048, 448); read512_armv7(addr + 2048, 512 + 448);
+			read512_armv7(addr + 3072,   0); read512_armv7(addr + 3072, 512 +   0);
+			read512_armv7(addr + 3072, 256); read512_armv7(addr + 3072, 512 + 256);
+			read512_armv7(addr + 3072, 128); read512_armv7(addr + 3072, 512 + 128);
+			read512_armv7(addr + 3072, 384); read512_armv7(addr + 3072, 512 + 384);
+			read512_armv7(addr + 3072, 320); read512_armv7(addr + 3072, 512 + 320);
+			read512_armv7(addr + 3072,  64); read512_armv7(addr + 3072, 512 +  64);
+			read512_armv7(addr + 3072, 192); read512_armv7(addr + 3072, 512 + 192);
+			read512_armv7(addr + 3072, 448); read512_armv7(addr + 3072, 512 + 448);
+		}
+	}
+	return rounds;
+}
+#endif
 
 
 /*****************************************************************************
@@ -1420,12 +1598,14 @@ int main(int argc, char **argv)
 		run[3] = run64_sse;
 		run[4] = run128_sse;
 		run[5] = run256_sse;
+		run[6] = run512_sse;
 	}
 #endif
 #if defined(__ARM_ARCH_7A__)
 	if (implementation & USE_ARMV7) {
 		run[3] = run64_armv7;
 		run[5] = run256_armv7;
+		run[6] = run512_armv7;
 	}
 #endif
 #if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
@@ -1433,6 +1613,7 @@ int main(int argc, char **argv)
 		run[3] = run64_vfp;
 		run[4] = run128_vfp;
 		run[5] = run256_vfp;
+		run[6] = run512_vfp;
 	}
 #endif
 
