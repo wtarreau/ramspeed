@@ -425,8 +425,8 @@ static inline void read64_quad_vfp(const char *addr, const unsigned long ofs)
 {
 	asm volatile("vldr %%d4, [%0,%1]\n\t"
 	             "vldr %%d5, [%0,%1+512]\n\t"
-		     "vldr %%d6, [%0,%1+256]\n\t"
-	             "vldr %%d7, [%0,%1+768]\n\t"
+		     "vldr %%d6, [%0,%1+128]\n\t"
+	             "vldr %%d7, [%0,%1+640]\n\t"
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
 	             : "%d4", "%d5", "%d6", "%d7");
@@ -451,30 +451,30 @@ unsigned int run64_vfp(void *area, size_t mask)
 			addr = area + (rnd & mask);
 
 			read64_quad_vfp(addr,   0);
-			read64_quad_vfp(addr, 128);
+			read64_quad_vfp(addr, 256);
 			read64_quad_vfp(addr,  64);
-			read64_quad_vfp(addr, 192);
+			read64_quad_vfp(addr, 320);
 
 			addr += 1024;
 
 			read64_quad_vfp(addr,   0);
-			read64_quad_vfp(addr, 128);
+			read64_quad_vfp(addr, 256);
 			read64_quad_vfp(addr,  64);
-			read64_quad_vfp(addr, 192);
+			read64_quad_vfp(addr, 320);
 
 			addr += 1024;
 
 			read64_quad_vfp(addr,   0);
-			read64_quad_vfp(addr, 128);
+			read64_quad_vfp(addr, 256);
 			read64_quad_vfp(addr,  64);
-			read64_quad_vfp(addr, 192);
+			read64_quad_vfp(addr, 320);
 
 			addr += 1024;
 
 			read64_quad_vfp(addr,   0);
-			read64_quad_vfp(addr, 128);
+			read64_quad_vfp(addr, 256);
 			read64_quad_vfp(addr,  64);
-			read64_quad_vfp(addr, 192);
+			read64_quad_vfp(addr, 320);
 		}
 	}
 	return rounds;
