@@ -1620,7 +1620,9 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 		return 0;
 
 	set_alarm(usec);
+	after = rdtsc();
 	before = rdtsc();
+	before += before-after;// compensate for the syscall time
 
 	rounds = run[fct](area, mask);
 
