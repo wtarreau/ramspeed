@@ -560,6 +560,62 @@ unsigned int run64_armv7(void *area, size_t mask)
 }
 #endif
 
+#if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
+static inline void read64_quad_armv8(const char *addr, const unsigned long ofs)
+{
+	asm volatile("ldr x0, [%0,#%1]\n\t"
+	             "ldr x1, [%0,#%1+512]\n\t"
+	             "ldr x0, [%0,#%1+128]\n\t"
+	             "ldr x1, [%0,#%1+512+128]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "x0", "x1");
+}
+
+/* runs the 64-bit test using ARMv8 optimizations, returns the number of rounds */
+unsigned int run64_armv8(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+			rnd -= 257 * 4096;
+
+			read64_quad_armv8(addr,   0);
+			read64_quad_armv8(addr, 256);
+			read64_quad_armv8(addr,  64);
+			read64_quad_armv8(addr, 320);
+
+			read64_quad_armv8(addr,   0 + 1024);
+			read64_quad_armv8(addr, 256 + 1024);
+			read64_quad_armv8(addr,  64 + 1024);
+			read64_quad_armv8(addr, 320 + 1024);
+
+			read64_quad_armv8(addr,   0 + 2048);
+			read64_quad_armv8(addr, 256 + 2048);
+			read64_quad_armv8(addr,  64 + 2048);
+			read64_quad_armv8(addr, 320 + 2048);
+
+			read64_quad_armv8(addr,   0 + 3072);
+			read64_quad_armv8(addr, 256 + 3072);
+			read64_quad_armv8(addr,  64 + 3072);
+			read64_quad_armv8(addr, 320 + 3072);
+		}
+	}
+	return rounds;
+}
+#endif
+
 
 /*****************************************************************************
  *                             128-bit accesses                              *
@@ -875,6 +931,68 @@ unsigned int run128_armv7(void *area, size_t mask)
 	return rounds;
 }
 #endif
+
+#if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
+// warning: addr is off by 512!
+static inline void read128_quad_armv8(const char *addr, const unsigned long ofs)
+{
+	asm volatile("ldp x0, x1, [%0,#%1-512]\n\t"
+	             "ldp x0, x1, [%0,#%1]\n\t"
+	             "ldp x0, x1, [%0,#%1-512+128]\n\t"
+	             "ldp x0, x1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "x0", "x1");
+}
+
+/* runs the 128-bit test using ARMv8 optimizations, returns the number of rounds */
+unsigned int run128_armv8(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	area += 512; // to compensate for -512 in read128_quad_armv8()
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read128_quad_armv8(addr,   0);
+			rnd -= 257 * 4096;
+			read128_quad_armv8(addr, 256);
+			read128_quad_armv8(addr,  64);
+			read128_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read128_quad_armv8(addr,   0);
+			read128_quad_armv8(addr, 256);
+			read128_quad_armv8(addr,  64);
+			read128_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read128_quad_armv8(addr,   0);
+			read128_quad_armv8(addr, 256);
+			read128_quad_armv8(addr,  64);
+			read128_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read128_quad_armv8(addr,   0);
+			read128_quad_armv8(addr, 256);
+			read128_quad_armv8(addr,  64);
+			read128_quad_armv8(addr, 320);
+		}
+	}
+	return rounds;
+}
+#endif
+
 
 
 /*****************************************************************************
@@ -1197,6 +1315,72 @@ unsigned int run256_armv7(void *area, size_t mask)
 	return rounds;
 }
 #endif
+
+#if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
+// warning: addr is off by 512!
+static inline void read256_quad_armv8(const char *addr, const unsigned long ofs)
+{
+	asm volatile("ldp x0, x1, [%0,#%1-512]\n\t"
+	             "ldp x2, x3, [%0,#%1-512+16]\n\t"
+	             "ldp x0, x1, [%0,#%1]\n\t"
+	             "ldp x2, x3, [%0,#%1+16]\n\t"
+	             "ldp x0, x1, [%0,#%1-512+128]\n\t"
+	             "ldp x2, x3, [%0,#%1-512+128+16]\n\t"
+	             "ldp x0, x1, [%0,#%1+128]\n\t"
+	             "ldp x2, x3, [%0,#%1+128+16]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "x0", "x1", "x2", "x3");
+}
+
+/* runs the 256-bit test using ARMv8 optimizations, returns the number of rounds */
+unsigned int run256_armv8(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	area += 512; // to compensate for -512 in read256_quad_armv8()
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read256_quad_armv8(addr,   0);
+			rnd -= 257 * 4096;
+			read256_quad_armv8(addr, 256);
+			read256_quad_armv8(addr,  64);
+			read256_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read256_quad_armv8(addr,   0);
+			read256_quad_armv8(addr, 256);
+			read256_quad_armv8(addr,  64);
+			read256_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read256_quad_armv8(addr,   0);
+			read256_quad_armv8(addr, 256);
+			read256_quad_armv8(addr,  64);
+			read256_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read256_quad_armv8(addr,   0);
+			read256_quad_armv8(addr, 256);
+			read256_quad_armv8(addr,  64);
+			read256_quad_armv8(addr, 320);
+		}
+	}
+	return rounds;
+}
+#endif
+
 
 
 /*****************************************************************************
@@ -1544,6 +1728,80 @@ unsigned int run512_armv7(void *area, size_t mask)
 }
 #endif
 
+#if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
+// warning: addr is off by 512!
+static inline void read512_quad_armv8(const char *addr, const unsigned long ofs)
+{
+	asm volatile("ldp x0, x1, [%0,#%1-512]\n\t"
+	             "ldp x2, x3, [%0,#%1-512+16]\n\t"
+	             "ldp x4, x5, [%0,#%1-512+32]\n\t"
+	             "ldp x6, x7, [%0,#%1-512+48]\n\t"
+	             "ldp x0, x1, [%0,#%1]\n\t"
+	             "ldp x2, x3, [%0,#%1+16]\n\t"
+	             "ldp x4, x5, [%0,#%1+32]\n\t"
+	             "ldp x6, x7, [%0,#%1+48]\n\t"
+	             "ldp x0, x1, [%0,#%1-512+128]\n\t"
+	             "ldp x2, x3, [%0,#%1-512+128+16]\n\t"
+	             "ldp x4, x5, [%0,#%1-512+128+32]\n\t"
+	             "ldp x6, x7, [%0,#%1-512+128+48]\n\t"
+	             "ldp x0, x1, [%0,#%1+128]\n\t"
+	             "ldp x2, x3, [%0,#%1+128+16]\n\t"
+	             "ldp x4, x5, [%0,#%1+128+32]\n\t"
+	             "ldp x6, x7, [%0,#%1+128+48]\n\t"
+	             : /* no output */
+	             : "r" (addr), "I" (ofs)
+	             : "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7");
+}
+
+/* runs the 512-bit test using ARMv8 optimizations, returns the number of rounds */
+unsigned int run512_armv8(void *area, size_t mask)
+{
+	unsigned int rounds;
+	const char *addr;
+	size_t rnd;
+
+	area += 512; // to compensate for -512 in read512_quad_armv8()
+	for (rounds = 0; !stop_now; rounds++) {
+		for (rnd = (size_t)((LOOPS_PER_ROUND / 64) * 257 * 4096UL); rnd;) {
+			/* Walk following a pseudo-random pattern and limit redundancy.
+			 * A 4096-byte address space is crossed following pseudo-random
+			 * moves within 64 byte locations and for each we test both the
+			 * position and a next one 512 bytes apart. This guarantees to
+			 * perform non-contiguous accesses that prevent any streaming
+			 * operation from being performed.
+			 */
+			addr = area + (rnd & mask);
+
+			read512_quad_armv8(addr,   0);
+			rnd -= 257 * 4096;
+			read512_quad_armv8(addr, 256);
+			read512_quad_armv8(addr,  64);
+			read512_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read512_quad_armv8(addr,   0);
+			read512_quad_armv8(addr, 256);
+			read512_quad_armv8(addr,  64);
+			read512_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read512_quad_armv8(addr,   0);
+			read512_quad_armv8(addr, 256);
+			read512_quad_armv8(addr,  64);
+			read512_quad_armv8(addr, 320);
+
+			addr += 1024;
+			read512_quad_armv8(addr,   0);
+			read512_quad_armv8(addr, 256);
+			read512_quad_armv8(addr,  64);
+			read512_quad_armv8(addr, 320);
+		}
+	}
+	return rounds;
+}
+#endif
+
+
 
 /*****************************************************************************
  *                                 measurements                              *
@@ -1644,6 +1902,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, s
 #define USE_SSE     1
 #define USE_VFP     2
 #define USE_ARMV7   4
+#define USE_ARMV8   8
 
 int main(int argc, char **argv)
 {
@@ -1671,7 +1930,9 @@ int main(int argc, char **argv)
 #if defined(__ARM_ARCH_7A__)
 	implementation |= USE_ARMV7;
 #endif
-
+#if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
+	implementation |= USE_ARMV8;
+#endif
 	usec = 100000;
 	size_max = 16 * 1048576;
 
@@ -1706,6 +1967,11 @@ int main(int argc, char **argv)
 			implementation = USE_ARMV7;
 		}
 #endif
+#if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
+		else if (strcmp(argv[1], "-8") == 0) {
+			implementation = USE_ARMV8;
+		}
+#endif
 		else {
 			fprintf(stderr,
 				"Usage: prog [options]* <time> <area>\n"
@@ -1723,6 +1989,9 @@ int main(int argc, char **argv)
 #endif
 #if defined(__ARM_ARCH_7A__)
 				"  -7 : use ARMv7\n"
+#endif
+#if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
+				"  -8 : use ARMv8\n"
 #endif
 				"");
 			exit(!!strcmp(argv[1], "-h"));
@@ -1767,6 +2036,14 @@ int main(int argc, char **argv)
 		run[4] = run128_vfp;
 		run[5] = run256_vfp;
 		run[6] = run512_vfp;
+	}
+#endif
+#if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
+	if (implementation & USE_ARMV8) {
+		run[3] = run64_armv8;
+		run[4] = run128_armv8;
+		run[5] = run256_armv8;
+		run[6] = run512_armv8;
 	}
 #endif
 
