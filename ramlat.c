@@ -1087,12 +1087,20 @@ unsigned int run256_generic(void *area, size_t mask)
 #ifdef __SSE2__
 static inline void read256_dual_sse(const char *addr, const unsigned long ofs)
 {
+#ifdef __AVX__
+	// requires -mavx
+	__m256i xmm0, xmm1;
+	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1) :
+	             "0" (_mm256_load_si256((void *)(addr + ofs +  0))),
+	             "1" (_mm256_load_si256((void *)(addr + ofs +  512))));
+#else
 	__m128i xmm0, xmm1, xmm2, xmm3;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
 	             "0" (_mm_load_si128((void *)(addr + ofs +  0))),
 	             "1" (_mm_load_si128((void *)(addr + ofs + 16))),
 	             "2" (_mm_load_si128((void *)(addr + ofs + 512 +  0))),
 	             "3" (_mm_load_si128((void *)(addr + ofs + 512 + 16))));
+#endif
 }
 
 /* runs the 256-bit test, returns the number of rounds */
@@ -1475,6 +1483,15 @@ unsigned int run512_generic(void *area, size_t mask)
 #ifdef __SSE2__
 static inline void read512_dual_sse(const char *addr, const unsigned long ofs)
 {
+#if __AVX__
+	// AVX
+	__m256i xmm0, xmm1, xmm2, xmm3;
+	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3) :
+	             "0" (_mm256_load_si256((void *)(addr + ofs +  0))),
+	             "1" (_mm256_load_si256((void *)(addr + ofs + 32))),
+	             "2" (_mm256_load_si256((void *)(addr + ofs + 512 +  0))),
+	             "3" (_mm256_load_si256((void *)(addr + ofs + 512 + 32))));
+#else
 	__m128i xmm0, xmm1, xmm2, xmm3;
 	__m128i xmm4, xmm5, xmm6, xmm7;
 	asm volatile("" : "=xm" (xmm0), "=xm" (xmm1), "=xm" (xmm2), "=xm" (xmm3), "=xm" (xmm4), "=xm" (xmm5), "=xm" (xmm6), "=xm" (xmm7) :
@@ -1486,6 +1503,7 @@ static inline void read512_dual_sse(const char *addr, const unsigned long ofs)
 	             "5" (_mm_load_si128((void *)(addr + ofs + 512 + 16))),
 	             "6" (_mm_load_si128((void *)(addr + ofs + 512 + 32))),
 	             "7" (_mm_load_si128((void *)(addr + ofs + 512 + 48))));
+#endif
 }
 
 /* runs the 512-bit test, returns the number of rounds */
@@ -1982,7 +2000,7 @@ int main(int argc, char **argv)
 				"  -h : show this help\n"
 				"  -G : use generic code only\n"
 #ifdef __SSE2__
-				"  -S : use SSE\n"
+				"  -S : use SSE/AVX\n"
 #endif
 #if defined (__VFP_FP__) && defined(__ARM_ARCH_7A__)
 				"  -V : use VFP\n"
