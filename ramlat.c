@@ -936,10 +936,10 @@ unsigned int run128_armv7(void *area, size_t mask)
 // warning: addr is off by 512!
 static inline void read128_quad_armv8(const char *addr, const unsigned long ofs)
 {
-	asm volatile("ldp x0, x1, [%0,#%1-512]\n\t"
-	             "ldp x0, x1, [%0,#%1]\n\t"
-	             "ldp x0, x1, [%0,#%1-512+128]\n\t"
-	             "ldp x0, x1, [%0,#%1+128]\n\t"
+	asm volatile("ldnp x0, x1, [%0,#%1-512]\n\t"
+	             "ldnp x0, x1, [%0,#%1]\n\t"
+	             "ldnp x0, x1, [%0,#%1-512+128]\n\t"
+	             "ldnp x0, x1, [%0,#%1+128]\n\t"
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
 	             : "x0", "x1");
@@ -1328,17 +1328,13 @@ unsigned int run256_armv7(void *area, size_t mask)
 // warning: addr is off by 512!
 static inline void read256_quad_armv8(const char *addr, const unsigned long ofs)
 {
-	asm volatile("ldp x0, x1, [%0,#%1-512]\n\t"
-	             "ldp x2, x3, [%0,#%1-512+16]\n\t"
-	             "ldp x0, x1, [%0,#%1]\n\t"
-	             "ldp x2, x3, [%0,#%1+16]\n\t"
-	             "ldp x0, x1, [%0,#%1-512+128]\n\t"
-	             "ldp x2, x3, [%0,#%1-512+128+16]\n\t"
-	             "ldp x0, x1, [%0,#%1+128]\n\t"
-	             "ldp x2, x3, [%0,#%1+128+16]\n\t"
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
-	             : "x0", "x1", "x2", "x3");
+	             : "q0", "q1");
 }
 
 /* runs the 256-bit test using ARMv8 optimizations, returns the number of rounds */
@@ -1750,25 +1746,17 @@ unsigned int run512_armv7(void *area, size_t mask)
 // warning: addr is off by 512!
 static inline void read512_quad_armv8(const char *addr, const unsigned long ofs)
 {
-	asm volatile("ldp x0, x1, [%0,#%1-512]\n\t"
-	             "ldp x2, x3, [%0,#%1-512+16]\n\t"
-	             "ldp x4, x5, [%0,#%1-512+32]\n\t"
-	             "ldp x6, x7, [%0,#%1-512+48]\n\t"
-	             "ldp x0, x1, [%0,#%1]\n\t"
-	             "ldp x2, x3, [%0,#%1+16]\n\t"
-	             "ldp x4, x5, [%0,#%1+32]\n\t"
-	             "ldp x6, x7, [%0,#%1+48]\n\t"
-	             "ldp x0, x1, [%0,#%1-512+128]\n\t"
-	             "ldp x2, x3, [%0,#%1-512+128+16]\n\t"
-	             "ldp x4, x5, [%0,#%1-512+128+32]\n\t"
-	             "ldp x6, x7, [%0,#%1-512+128+48]\n\t"
-	             "ldp x0, x1, [%0,#%1+128]\n\t"
-	             "ldp x2, x3, [%0,#%1+128+16]\n\t"
-	             "ldp x4, x5, [%0,#%1+128+32]\n\t"
-	             "ldp x6, x7, [%0,#%1+128+48]\n\t"
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q2, q3, [%0,#%1-512+32]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1+32]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q2, q3, [%0,#%1-512+128+32]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             "ldnp q2, q3, [%0,#%1+128+32]\n\t"
 	             : /* no output */
 	             : "r" (addr), "I" (ofs)
-	             : "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7");
+	             : "q0", "q1", "q2", "q3");
 }
 
 /* runs the 512-bit test using ARMv8 optimizations, returns the number of rounds */
