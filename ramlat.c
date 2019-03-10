@@ -1337,6 +1337,128 @@ static inline void read256_quad_armv8(const char *addr, const unsigned long ofs)
 	             : "q0", "q1");
 }
 
+static inline void read256_4k_armv8(const char **a1)
+{
+	const char *a2;
+
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (*a1), "I" (0)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (*a1), "I" (256)
+	             : "q0", "q1");
+	a2 = *a1 + 1024;
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (*a1), "I" (64)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (*a1), "I" (320)
+	             : "q0", "q1");
+	*a1 += 1024;
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (a2), "I" (0)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (a2), "I" (256)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (a2), "I" (64)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (a2), "I" (320)
+	             : "q0", "q1");
+	a2 += 1024;
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (*a1), "I" (0)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (*a1), "I" (256)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (*a1), "I" (64)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (*a1), "I" (320)
+	             : "q0", "q1");
+	*a1 += 1024;
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (a2), "I" (0)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (a2), "I" (256)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (a2), "I" (64)
+	             : "q0", "q1");
+	asm volatile("ldnp q0, q1, [%0,#%1-512]\n\t"
+	             "ldnp q0, q1, [%0,#%1]\n\t"
+	             "ldnp q0, q1, [%0,#%1-512+128]\n\t"
+	             "ldnp q0, q1, [%0,#%1+128]\n\t"
+	             : /* no output */
+	             : "r" (a2), "I" (320)
+	             : "q0", "q1");
+}
+
 /* runs the 256-bit test using ARMv8 optimizations, returns the number of rounds */
 unsigned int run256_armv8(void *area, size_t mask)
 {
@@ -1356,29 +1478,8 @@ unsigned int run256_armv8(void *area, size_t mask)
 			 */
 			addr = area + (rnd & mask);
 
-			read256_quad_armv8(addr,   0);
 			rnd -= 257 * 4096;
-			read256_quad_armv8(addr, 256);
-			read256_quad_armv8(addr,  64);
-			read256_quad_armv8(addr, 320);
-
-			addr += 1024;
-			read256_quad_armv8(addr,   0);
-			read256_quad_armv8(addr, 256);
-			read256_quad_armv8(addr,  64);
-			read256_quad_armv8(addr, 320);
-
-			addr += 1024;
-			read256_quad_armv8(addr,   0);
-			read256_quad_armv8(addr, 256);
-			read256_quad_armv8(addr,  64);
-			read256_quad_armv8(addr, 320);
-
-			addr += 1024;
-			read256_quad_armv8(addr,   0);
-			read256_quad_armv8(addr, 256);
-			read256_quad_armv8(addr,  64);
-			read256_quad_armv8(addr, 320);
+			read256_4k_armv8(&addr);
 		}
 	}
 	return rounds;
