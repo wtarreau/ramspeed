@@ -559,7 +559,7 @@ int main(int argc, char **argv)
 	unsigned int ret, word;
 	int quiet = 0;
 	int slowstart = 0;
-	int bw = 0;
+	int fmt = 0;
 	int fct;
 
 	usec = 100000;
@@ -573,12 +573,16 @@ int main(int argc, char **argv)
 			slowstart = 1;
 		}
 		else if (strcmp(argv[1], "-b") == 0) {
-			bw = 1;
+			fmt = 1;
+		}
+		else if (strcmp(argv[1], "-n") == 0) {
+			fmt = 2;
 		}
 		else {
 			fprintf(stderr,
 				"Usage: prog [options]* <time_ms> <area_kB>\n"
 				"  -b : report equivalent bandwidth in MB/s\n"
+				"  -n : report output in nanosecond per access\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
 				"  -q : quiet : don't show column headers\n"
 				"  -h : show this help\n"
@@ -615,15 +619,38 @@ int main(int argc, char **argv)
 		set_alarm(0);
 	}
 
-	if (!quiet)
-		printf("   size:   1x32    2x32    1x64    2x64   1xPTR   2xPTR   4xPTR\n");
+	if (!quiet) {
+		if (fmt == 1)
+			printf("   size:  1x32  2x32  1x64  2x64 1xPTR 2xPTR 4xPTR\n");
+		else if (fmt == 2)
+			printf("   size:  1x32  2x32  1x64  2x64 1xPTR 2xPTR 4xPTR\n");
+		else
+			printf("   size:   1x32    2x32    1x64    2x64   1xPTR   2xPTR   4xPTR\n");
+	}
 
 	for (size = 4096; size <= size_max; size *= 2) {
 		printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 		for (fct = 0; run[fct]; fct++) {
-			word = run[fct](NULL) & 255;
 			ret = random_read_over_area(area, usec, size, fct);
-			printf("%7u ", bw ? ret * word : ret);
+			if (fmt == 1) {
+				/* bandwidth in MB/s */
+				word = run[fct](NULL) & 255;
+				printf("%5u ", ret * word / 1024U);
+			} else if (fmt == 2) {
+				/* nanoseconds per access */
+				double lat = 1000000.0 / ret;
+				if (lat < 10.0)
+					printf("%1.3f ", lat);
+				else if (lat < 100.0)
+					printf("%2.2f ", lat);
+				else if (lat < 1000.0)
+					printf("%3.1f ", lat);
+				else
+					printf("%4.0f ", lat);
+			} else {
+				/* accesses per millisecond */
+				printf("%7u ", ret);
+			}
 		}
 		printf("\n");
 	}
