@@ -2154,9 +2154,10 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	area = malloc(size_max + 4096);
-	if ((off_t)area & 4095)
-		area = (void *)(((off_t)area | 4095) + 1);
+	if (posix_memalign(&area, size_max / 4, size_max) != 0) {
+		printf("Failed to allocate memory\n");
+		exit(1);
+	}
 
 	if (slowstart) {
 		set_alarm(500000);
