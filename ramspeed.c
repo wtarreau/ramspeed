@@ -28,8 +28,10 @@ unsigned int bench_memcpy(unsigned int loop, unsigned int size)
 	memset(dst, 0, size);
 
 	before = rdtsc();
-	for (i = 0; i < loop; i++)
-		memcpy(dst, src, size);
+	for (i = 0; i < loop; i++) {
+		memcpy(dst + unalign, src, size);
+		asm("" ::: "memory");
+	}
 	after = rdtsc();
 
 	free(src);
@@ -56,10 +58,12 @@ unsigned int bench_memcpy2(unsigned int loop, unsigned int size)
 	for (i = 0; i < loop; i++) {
 		char *end = dst + size;
 		d = dst; s = src;
-		for (d = dst; d < end; /*ptr += 32*/)
+		for (d = dst; d < end; /*ptr += 32*/) {
 			asm("ldmia %0!, { r4-r11 }\n\t"
 			    "stmia %1!, { r4-r11 }\n\t"
 			    : "=r" (s), "=r" (d) : "0" (d), "1" (s) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
+			asm("" ::: "memory");
+		}
 	}
 	after = rdtsc();
 
@@ -81,9 +85,12 @@ unsigned int bench_memchr(unsigned int loop, unsigned int size)
 	memset(dst, 0, size);
 
 	before = rdtsc();
-	for (i = 0; i < loop; i++)
+	for (i = 0; i < loop; i++) {
 		if (memchr(dst, i|1, size))
 			return 0;
+		asm("" ::: "memory");
+	}
+
 	after = rdtsc();
 
 	free(dst);
@@ -102,8 +109,10 @@ unsigned int bench_memset(unsigned int loop, unsigned int size)
 	memset(dst, 0, size);
 
 	before = rdtsc();
-	for (i = 0; i < loop; i++)
+	for (i = 0; i < loop; i++) {
 		memset(dst, i, size);
+		asm("" ::: "memory");
+	}
 	after = rdtsc();
 
 	free(dst);
