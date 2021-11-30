@@ -1,6 +1,10 @@
+#include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+static unsigned int unalign;
 
 struct test_fct {
 	const char *name;
@@ -18,10 +22,10 @@ unsigned int bench_memcpy(unsigned int loop, unsigned int size)
 {
 	unsigned long long before, after;
 	unsigned int i;
-	char *src, *dst;
+	void *src, *dst;
 
-	src = malloc(size);
-	dst = malloc(size);
+	posix_memalign(&src, 64, size);
+	posix_memalign(&dst, 64, size + unalign);
 
 	/* ensure the pages are allocated */
 	memset(src, 0, size);
@@ -246,6 +250,9 @@ main(int argc, char **argv)
 
 	if (argc > 2)
 		size = atoi(argv[2]);
+
+	if (argc > 3)
+		unalign = atoi(argv[3]);
 
 	run_bench(loop, size);
 	exit(0);
