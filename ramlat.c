@@ -17,6 +17,7 @@ static volatile int stop_now;
  * area for indexed walks, or the same + 256 for pointer accesses.
  */
 static unsigned int (*run[10])(void *area);
+static const char const *name[10];
 
 static inline uint32_t rbit32(uint32_t x)
 {
@@ -611,13 +612,13 @@ int main(int argc, char **argv)
 	if (argc > 2)
 		size_max = atol(argv[2]) * 1024;
 
-	run[0] = run_1w32_generic;
-	run[1] = run_2w32_generic;
-	run[2] = run_1w64_generic;
-	run[3] = run_2w64_generic;
-	run[4] = run_1ptr_generic;
-	run[5] = run_2ptr_generic;
-	run[6] = run_4ptr_generic;
+	run[0] = run_1w32_generic;  name[0] = "1x32";
+	run[1] = run_2w32_generic;  name[1] = "2x32";
+	run[2] = run_1w64_generic;  name[2] = "1x64";
+	run[3] = run_2w64_generic;  name[3] = "2x64";
+	run[4] = run_1ptr_generic;  name[4] = "1xPTR";
+	run[5] = run_2ptr_generic;  name[5] = "2xPTR";
+	run[6] = run_4ptr_generic;  name[6] = "4xPTR";
 
 	area = memalign(size_max / 4, size_max);
 	if (!area) {
@@ -633,12 +634,17 @@ int main(int argc, char **argv)
 	}
 
 	if (!quiet) {
-		if (fmt == 1)
-			printf("   size:  1x32  2x32  1x64  2x64 1xPTR 2xPTR 4xPTR\n");
-		else if (fmt == 2)
-			printf("   size:  1x32  2x32  1x64  2x64 1xPTR 2xPTR 4xPTR\n");
-		else
-			printf("   size:   1x32    2x32    1x64    2x64   1xPTR   2xPTR   4xPTR\n");
+		int field;
+
+		printf("   size:");
+		for (field = 0; name[field]; field++) {
+			if (fmt == 1 || fmt == 2)
+				printf("%6s", name[field]);
+			else
+				printf("%8s", name[field]);
+		}
+
+		printf("\n");
 	}
 
 	for (size = 4096; size <= size_max; size *= 2) {
