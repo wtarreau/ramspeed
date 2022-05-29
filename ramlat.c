@@ -187,8 +187,8 @@ unsigned int run_2ptr_generic(void *area)
 		return 256 + sizeof(ofs0);
 
 	for (rounds = 0; !stop_now; rounds++) {
-		ofs0 = &((void**)area)[0];
-		ofs1 = &((void**)area)[64];
+		ofs0 = (void**)area + 0;
+		ofs1 = (void**)area + 64;
 		for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
 			// 16 memory dual-reads
 			ofs0 = *ofs0; ofs1 = *ofs1;
@@ -231,10 +231,10 @@ unsigned int run_4ptr_generic(void *area)
 		return 256 + sizeof(ofs0);
 
 	for (rounds = 0; !stop_now; rounds++) {
-		ofs0 = &((void**)area)[0];
-		ofs1 = &((void**)area)[64];
-		ofs2 = &((void**)area)[128];
-		ofs3 = &((void**)area)[192];
+		ofs0 = (void**)area + 0;
+		ofs1 = (void**)area + 64;
+		ofs2 = (void**)area + 128;
+		ofs3 = (void**)area + 192;
 		for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
 			// 16 memory quad-reads
 			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
