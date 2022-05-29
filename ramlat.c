@@ -570,6 +570,7 @@ int main(int argc, char **argv)
 	size_t size, size_max;
 	void *area;
 	unsigned int cols = 0;
+	unsigned int wins = 0;
 	unsigned int ret, word;
 	int quiet = 0;
 	int slowstart = 0;
@@ -577,7 +578,7 @@ int main(int argc, char **argv)
 	int fct;
 
 	usec = 100000;
-	size_max = 16 * 1048576;
+	size_max = 0;
 
 	while (argc > 1 && *argv[1] == '-') {
 		if (strcmp(argv[1], "-q") == 0) {
@@ -609,6 +610,25 @@ int main(int argc, char **argv)
 			}
 			argc--; argv++;
 		}
+		else if (argc > 1 && strcmp(argv[1], "-w") == 0) {
+			/* -w size[,...] */
+			char *next = argv[2];
+			char *end;
+			int win;
+
+			while (*next) {
+				win = strtol(next, &end, 0);
+				if ((win < 12 || win > 31) || (*end != '\0' && *end != ','))
+					break;
+				if ((1U << win) > size_max)
+					size_max = 1U << win;
+				wins |= 1U << win;
+				if (*end == ',')
+					end++;
+				next = end;
+			}
+			argc--; argv++;
+		}
 		else {
 			fprintf(stderr,
 				"Usage: prog [options]* <time_ms> <area_kB>\n"
@@ -616,6 +636,7 @@ int main(int argc, char **argv)
 				"  -c <cols>   only emit these columns (1..N, ...)\n"
 				"  -n          report output in nanosecond per access\n"
 				"  -s          slowstart : pre-heat for 500ms to let cpufreq adapt\n"
+				"  -w <sizes>  only test at these power of 2 sizes (12..31, ...)\n"
 				"  -q          quiet : don't show column headers\n"
 				"  -h          show this help\n"
 				"");
@@ -627,6 +648,9 @@ int main(int argc, char **argv)
 
 	if (argc > 1)
 		usec = atoi(argv[1]) * 1000;
+
+	if (!size_max)
+		size_max = 16 * 1048576;
 
 	if (argc > 2)
 		size_max = atol(argv[2]) * 1024;
@@ -668,7 +692,9 @@ int main(int argc, char **argv)
 		printf("\n");
 	}
 
-	for (size = 4096; size <= size_max; size *= 2) {
+	for (size = 4096; size <= size_max || size <= wins; size *= 2) {
+		if (wins && !(wins & size))
+			continue;
 		printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 		for (fct = 0; run[fct]; fct++) {
 			if (cols && !(cols & (1 << fct)))
