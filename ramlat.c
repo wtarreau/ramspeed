@@ -58,34 +58,36 @@ static inline uint64_t rbit64(uint64_t x)
 static void fill_area_32(void *area, size_t size)
 {
 	uint32_t *base = (uint32_t *)area;
-	uint32_t ofs, addr, next, shift;
+	uint32_t ofs, addr;
 
-	for (shift = 0; size >> shift > 1; shift++)
-		;
-
-	shift = 32 - shift;
-	shift += 2; // each location is 4 bytes
-
-	for (addr = ofs = 0; ofs < size / sizeof(uint32_t); addr = next) {
-		next = rbit32(++ofs) >> shift;
-		base[addr] = next << 2;
+	ofs = size / 2;
+	for (addr = 0; addr < size / sizeof(uint32_t); addr++) {
+		base[addr] = ofs;
+		ofs += sizeof(*base);
+		if (!(ofs & (ofs - 1))) {
+			/* reached next power of two, restart from the lower one.
+			 * E.g, for 4kB, 0x800->0xfff, 0x400->0x7ff, 0x200->0x3ff, ...
+			 */
+			ofs = (ofs / 4) & -sizeof(*base);
+		}
 	}
 }
 
 static void fill_area_64(void *area, size_t size)
 {
 	uint64_t *base = (uint64_t *)area;
-	uint64_t ofs, addr, next, shift;
+	uint64_t ofs, addr;
 
-	for (shift = 0; size >> shift > 1; shift++)
-		;
-
-	shift = 64 - shift;
-	shift += 3; // each location is 8 bytes
-
-	for (addr = ofs = 0; ofs < size / sizeof(uint64_t); addr = next) {
-		next = rbit64(++ofs) >> shift;
-		base[addr] = next << 3;
+	ofs = size / 2;
+	for (addr = 0; addr < size / sizeof(*base); addr++) {
+		base[addr] = ofs;
+		ofs += sizeof(*base);
+		if (!(ofs & (ofs - 1))) {
+			/* reached next power of two, restart from the lower one.
+			 * E.g, for 4kB, 0x800->0xfff, 0x400->0x7ff, 0x200->0x3ff, ...
+			 */
+			ofs = (ofs / 4) & ~sizeof(*base);
+		}
 	}
 }
 
@@ -98,24 +100,33 @@ static void fill_area_ptr(void *area, size_t size)
 
 	if (sizeof(void*) == 4) {
 		uint32_t *base = (uint32_t *)area;
-		uint32_t ofs, addr, next;
+		uint32_t ofs, addr;
 
-		shift = 32 - shift;
-		shift += 2; // each location is 4 bytes
-		for (addr = ofs = 0; ofs < size / sizeof(uint32_t); addr = next) {
-			next = rbit32(++ofs) >> shift;
-			base[addr] = (uint32_t)(long)&base[next];
+		ofs = size / 2;
+		for (addr = 0; addr < size / sizeof(*base); addr++) {
+			base[addr] = (long)base + ofs;
+			ofs += sizeof(*base);
+			if (!(ofs & (ofs - 1))) {
+				/* reached next power of two, restart from the lower one.
+				 * E.g, for 4kB, 0x800->0xfff, 0x400->0x7ff, 0x200->0x3ff, ...
+				 */
+				ofs = (ofs / 4) & -sizeof(*base);
+			}
 		}
 	} else {
 		uint64_t *base = (uint64_t *)area;
-		uint64_t ofs, addr, next;
+		uint64_t ofs, addr;
 
-		shift = 64 - shift;
-		shift += 3; // each location is 8 bytes
-
-		for (addr = ofs = 0; ofs < size / sizeof(uint64_t); addr = next) {
-			next = rbit64(++ofs) >> shift;
-			base[addr] = (uint64_t)(long)&base[next];
+		ofs = size / 2;
+		for (addr = 0; addr < size / sizeof(*base); addr++) {
+			base[addr] = (long)base + ofs;
+			ofs += sizeof(*base);
+			if (!(ofs & (ofs - 1))) {
+				/* reached next power of two, restart from the lower one.
+				 * E.g, for 4kB, 0x800->0xfff, 0x400->0x7ff, 0x200->0x3ff, ...
+				 */
+				ofs = (ofs / 4) & -sizeof(*base);
+			}
 		}
 	}
 }
