@@ -569,6 +569,7 @@ int main(int argc, char **argv)
 	unsigned int usec;
 	size_t size, size_max;
 	void *area;
+	unsigned int cols = 0;
 	unsigned int ret, word;
 	int quiet = 0;
 	int slowstart = 0;
@@ -591,14 +592,32 @@ int main(int argc, char **argv)
 		else if (strcmp(argv[1], "-n") == 0) {
 			fmt = 2;
 		}
+		else if (argc > 1 && strcmp(argv[1], "-c") == 0) {
+			/* -c col[,...] */
+			char *next = argv[2];
+			char *end;
+			int col;
+
+			while (*next) {
+				col = strtol(next, &end, 0);
+				if (!col || (*end != '\0' && *end != ','))
+					break;
+				cols |= 1 << (col - 1);
+				if (*end == ',')
+					end++;
+				next = end;
+			}
+			argc--; argv++;
+		}
 		else {
 			fprintf(stderr,
 				"Usage: prog [options]* <time_ms> <area_kB>\n"
-				"  -b : report equivalent bandwidth in MB/s\n"
-				"  -n : report output in nanosecond per access\n"
-				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
-				"  -q : quiet : don't show column headers\n"
-				"  -h : show this help\n"
+				"  -b          report equivalent bandwidth in MB/s\n"
+				"  -c <cols>   only emit these columns (1..N, ...)\n"
+				"  -n          report output in nanosecond per access\n"
+				"  -s          slowstart : pre-heat for 500ms to let cpufreq adapt\n"
+				"  -q          quiet : don't show column headers\n"
+				"  -h          show this help\n"
 				"");
 			exit(!!strcmp(argv[1], "-h"));
 		}
@@ -638,6 +657,8 @@ int main(int argc, char **argv)
 
 		printf("   size:");
 		for (field = 0; name[field]; field++) {
+			if (cols && !(cols & (1 << field)))
+				continue;
 			if (fmt == 1 || fmt == 2)
 				printf("%6s", name[field]);
 			else
@@ -650,6 +671,8 @@ int main(int argc, char **argv)
 	for (size = 4096; size <= size_max; size *= 2) {
 		printf(quiet ? "%6u " : "%6uk: ", (unsigned int)(size >> 10U));
 		for (fct = 0; run[fct]; fct++) {
+			if (cols && !(cols & (1 << fct)))
+				continue;
 			ret = random_read_over_area(area, usec, size, fct);
 			if (fmt == 1) {
 				/* bandwidth in MB/s */
