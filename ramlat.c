@@ -268,6 +268,82 @@ unsigned int run_4ptr_generic(void *area)
 	return rounds;
 }
 
+/* runs the 8-pointer test, returns the number of rounds */
+unsigned int run_8ptr_generic(void *area)
+{
+	unsigned int rounds;
+	unsigned int loop;
+	void **ofs0;
+	void **ofs1;
+	void **ofs2;
+	void **ofs3;
+	void **ofs4;
+	void **ofs5;
+	void **ofs6;
+	void **ofs7;
+
+	if (!area)
+		return (7 << 16) + 256 + sizeof(ofs0);
+
+	for (rounds = 0; !stop_now; rounds++) {
+		ofs0 = (void**)area + 0;
+		ofs1 = (void**)area + 64;
+		ofs2 = (void**)area + 128;
+		ofs3 = (void**)area + 192;
+		ofs4 = (void**)area + 256;
+		ofs5 = (void**)area + 320;
+		ofs6 = (void**)area + 384;
+		ofs7 = (void**)area + 448;
+		for (loop = 0; loop < LOOPS_PER_ROUND; loop += 16) {
+			// 16 memory octa-reads
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+			ofs0 = *ofs0; ofs1 = *ofs1; ofs2 = *ofs2; ofs3 = *ofs3;
+			ofs4 = *ofs4; ofs5 = *ofs5; ofs6 = *ofs6; ofs7 = *ofs7;
+		}
+		asm("" :: "r"(ofs0));
+		asm("" :: "r"(ofs1));
+		asm("" :: "r"(ofs2));
+		asm("" :: "r"(ofs3));
+		asm("" :: "r"(ofs4));
+		asm("" :: "r"(ofs5));
+		asm("" :: "r"(ofs6));
+		asm("" :: "r"(ofs7));
+	}
+	return rounds;
+}
+
 /*****************************************************************************
  *                              32-bit accesses                              *
  *****************************************************************************/
@@ -668,6 +744,7 @@ int main(int argc, char **argv)
 	run[4] = run_1ptr_generic;  name[4] = "1xPTR";
 	run[5] = run_2ptr_generic;  name[5] = "2xPTR";
 	run[6] = run_4ptr_generic;  name[6] = "4xPTR";
+	run[7] = run_8ptr_generic;  name[7] = "8xPTR";
 
 	area = memalign(size_max / 4, size_max);
 	if (!area) {
