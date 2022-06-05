@@ -19,7 +19,7 @@ static volatile int stop_now;
  * words are read at once.
  */
 static unsigned int (*run[10])(void *area);
-static const char const *name[10];
+static const char *name[10];
 
 static inline uint32_t rbit32(uint32_t x)
 {
