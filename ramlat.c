@@ -582,19 +582,6 @@ void set_alarm(unsigned int usec)
 	setitimer(ITIMER_VIRTUAL, &timer, NULL);
 }
 
-/* returns a mask to cover the nearest lower power of two for <size> */
-static size_t mask_rounded_down(size_t size)
-{
-	size_t mask = size;
-	unsigned int shift = 1;
-
-	while (shift < 8 * sizeof(mask) && (size = mask >> shift)) {
-		mask |= size;
-		shift <<= 1;
-	}
-	return mask >> 1;
-}
-
 /* Randomly accesses aligned words using function #<fct> over <size> bytes of
  * area <area> for about <usec> microseconds, then returns the number of words
  * read per microsecond. Note: size is rounded down to the lower power of two,
