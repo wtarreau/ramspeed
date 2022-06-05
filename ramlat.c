@@ -15,6 +15,8 @@ static volatile int stop_now;
 /* These are the functions to call for different pattern walk tests.
  * They are expected to return the word size when called with a NULL
  * area for indexed walks, or the same + 256 for pointer accesses.
+ * The 3rd word (bits 16 to 24), indicates how many extra parallel
+ * words are read at once.
  */
 static unsigned int (*run[10])(void *area);
 static const char const *name[10];
@@ -185,7 +187,7 @@ unsigned int run_2ptr_generic(void *area)
 	void **ofs1;
 
 	if (!area)
-		return 256 + sizeof(ofs0);
+		return (1 << 16) + 256 + sizeof(ofs0);
 
 	for (rounds = 0; !stop_now; rounds++) {
 		ofs0 = (void**)area + 0;
@@ -229,7 +231,7 @@ unsigned int run_4ptr_generic(void *area)
 	void **ofs3;
 
 	if (!area)
-		return 256 + sizeof(ofs0);
+		return (3 << 16) + 256 + sizeof(ofs0);
 
 	for (rounds = 0; !stop_now; rounds++) {
 		ofs0 = (void**)area + 0;
@@ -318,7 +320,7 @@ unsigned int run_2w32_generic(void *area)
 	uint32_t ofs1;
 
 	if (!area)
-		return sizeof(ofs0);
+		return (1 << 16) + sizeof(ofs0);
 
 	for (rounds = 0; !stop_now; rounds++) {
 		ofs0 = 0;
@@ -420,7 +422,7 @@ unsigned int run_2w64_generic(void *area)
 	uint64_t ofs1;
 
 	if (!area)
-		return sizeof(ofs0);
+		return (1 << 16) + sizeof(ofs0);
 
 	for (rounds = 0; !stop_now; rounds++) {
 		ofs0 = 0;
@@ -706,7 +708,8 @@ int main(int argc, char **argv)
 			ret = random_read_over_area(area, usec, size, fct);
 			if (fmt == 1) {
 				/* bandwidth in MB/s */
-				word = run[fct](NULL) & 255;
+				word = run[fct](NULL);
+				word = (word & 255) * (((word >> 16) & 255) + 1);
 				printf("%5u ", ret * word / 1024U);
 			} else if (fmt == 2) {
 				/* nanoseconds per access */
