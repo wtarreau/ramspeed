@@ -536,12 +536,16 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size, i
 
 	word = run[fct](NULL);
 
-	if (word == 4)
-		fill_area_32(area, size);
-	else if (word == 8)
-		fill_area_64(area, size);
-	else
+	if (word & 256)
 		fill_area_ptr(area, size);
+	else {
+		if ((word & 255) == 4)
+			fill_area_32(area, size);
+		else if ((word & 255) == 8)
+			fill_area_64(area, size);
+		else
+			abort();
+	}
 
 	set_alarm(usec);
 	after = rdtsc();
