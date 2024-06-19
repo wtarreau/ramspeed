@@ -1,6 +1,6 @@
 CC         := gcc
 CFLAGS     := -O3 -Wall -fomit-frame-pointer
-OBJS       := ramlat rambw
+OBJS       := ramlat rambw ramwalk
 
 all: $(OBJS)
 
