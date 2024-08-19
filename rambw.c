@@ -102,7 +102,7 @@ void *run512_generic(void *private)
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
-	for (rnd = 0; !stop_now; ) {
+	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
@@ -180,7 +180,7 @@ void *run512_sse(void *private)
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
-	for (rnd = 0; !stop_now; ) {
+	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
@@ -267,7 +267,7 @@ void *run512_avx(void *private)
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
-	for (rnd = 0; !stop_now; ) {
+	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
@@ -356,7 +356,7 @@ void *run512_vfp(void *private)
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
-	for (rnd = 0; !stop_now; ) {
+	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
@@ -429,7 +429,7 @@ void *run512_armv7(void *private)
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
-	for (rnd = 0; !stop_now; ) {
+	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
@@ -505,7 +505,7 @@ void *run512_armv8(void *private)
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
-	for (rnd = 0; !stop_now; ) {
+	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
@@ -685,6 +685,7 @@ unsigned int random_read_over_area(void *area, size_t size)
 		stats[thr].area = area;
 		stats[thr].mask = mask;
 		stats[thr].thr = thr;
+		stats[thr].rnd = thr * size / nbthreads;
 		if (thr > 0 && pthread_create(&stats[thr].pth, NULL, run, &stats[thr]) < 0) {
 			fprintf(stderr, "Failed to start thread #%d; aborting.\n", thr);
 			exit(1);
