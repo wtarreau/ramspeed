@@ -4,6 +4,7 @@
 
 #include <sys/time.h>
 #include <malloc.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -51,6 +52,8 @@ struct stats {
 
 	void *area;
 	size_t mask;
+	pthread_t pth;   // pthread of the thread
+	int thr;
 } __attribute__((aligned(64)));
 
 struct stats stats[MAX_THREADS];
@@ -60,6 +63,8 @@ static volatile int stop_now;
 static volatile unsigned int meas_count;
 static volatile uint64_t start_time;
 static unsigned int interval_usec;
+static int nbthreads = 1;
+static __thread int thread_num;
 
 void *(*run)(void *private);
 void set_alarm(unsigned int usec);
@@ -95,6 +100,7 @@ void *run512_generic(void *private)
 	const char *addr;
 	uint64_t rnd;
 
+	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -172,6 +178,7 @@ void *run512_sse(void *private)
 	const char *addr;
 	uint64_t rnd;
 
+	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -258,6 +265,7 @@ void *run512_avx(void *private)
 	const char *addr;
 	uint64_t rnd;
 
+	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -346,6 +354,7 @@ void *run512_vfp(void *private)
 	const char *addr;
 	uint64_t rnd;
 
+	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -418,6 +427,7 @@ void *run512_armv7(void *private)
 	const char *addr;
 	uint64_t rnd;
 
+	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -493,6 +503,7 @@ void *run512_armv8(void *private)
 	const char *addr;
 	uint64_t rnd;
 
+	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -580,15 +591,22 @@ static inline void set_start_time()
  */
 void alarm_handler(int sig)
 {
+	int thr;
+
+	//printf("thread_num=%d\n", thread_num);
+
 	if (interval_usec) {
 		uint64_t now, usec, rounds;
 
-		/* measure the time since last pass */
+		/* measure the time since last pass, only on first thread */
 		now = rdtsc();
 
-		stats[0].last = stats[0].rnd;
-		rounds = stats[0].last - stats[0].prev;
-		stats[0].prev = stats[0].last;
+		for (rounds = thr = 0; thr < nbthreads; thr++) {
+			stats[thr].last = stats[thr].rnd;
+			//printf("thr %d : %llu\n", thr, stats[thr].last - stats[thr].prev);
+			rounds += stats[thr].last - stats[thr].prev;
+			stats[thr].prev = stats[thr].last;
+		}
 
 		/* speed = rounds per microsecond. Use 64-bit computations to avoid
 		 * overflows.
@@ -599,6 +617,7 @@ void alarm_handler(int sig)
 
 		rounds /= usec; // express it in B/us = MB/s
 		printf("%llu\n", (unsigned long long)rounds);
+		//printf("now=%llu usec=%llu %llu intv=%d\n", now, usec, (unsigned long long)rounds);
 
 		if (meas_count && --meas_count) {
 			/* rearm the timer for another measure */
@@ -648,6 +667,7 @@ static size_t mask_rounded_down(size_t size)
 unsigned int random_read_over_area(void *area, size_t size)
 {
 	size_t mask;
+	int thr;
 
 	mask = mask_rounded_down(size);
 
@@ -660,8 +680,17 @@ unsigned int random_read_over_area(void *area, size_t size)
 
 	set_start_time();
 
-	stats[0].area = area;
-	stats[0].mask = mask;
+	/* create threads for thread 1 and above */
+	for (thr = 0; thr < nbthreads; thr++) {
+		stats[thr].area = area;
+		stats[thr].mask = mask;
+		stats[thr].thr = thr;
+		if (thr > 0 && pthread_create(&stats[thr].pth, NULL, run, &stats[thr]) < 0) {
+			fprintf(stderr, "Failed to start thread #%d; aborting.\n", thr);
+			exit(1);
+		}
+	}
+
 	run(&stats[0]);
 
 	set_alarm(0);
@@ -703,6 +732,10 @@ int main(int argc, char **argv)
 		if (strcmp(argv[1], "-s") == 0) {
 			slowstart = 1;
 		}
+		else if (strcmp(argv[1], "-t") == 0 && argc > 2) {
+			nbthreads = atoi(argv[2]);
+			argc--; argv++;
+		}
 		else if (strcmp(argv[1], "-G") == 0) {
 			implementation = USE_GENERIC;
 		}
@@ -734,6 +767,7 @@ int main(int argc, char **argv)
 		else {
 			fprintf(stderr,
 				"Usage: prog [options]* [<time_ms> [<count> [<area>]]]\n"
+				"  -t <threads> : start this number of threads.\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
 				"  -h : show this help\n"
 				"  -G : use generic code only\n"
@@ -812,7 +846,10 @@ int main(int argc, char **argv)
 
 	interval_usec = usec;
 	meas_count = meas_count > 0 ? meas_count : 1;
-
+	if (nbthreads > MAX_THREADS) {
+		fprintf(stderr, "Fatal: too many threads, max is %d.\n", MAX_THREADS);
+		exit(1);
+	}
 	random_read_over_area(area, size);
 	exit(0);
 }

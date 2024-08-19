@@ -7,6 +7,9 @@ all: $(OBJS)
 %: %.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
+rambw: rambw.o
+	$(CC) $(LDFLAGS) -o $@ $^ -pthread
+
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
