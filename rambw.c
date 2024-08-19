@@ -48,6 +48,9 @@ struct stats {
 	uint64_t rnd;    // work value
 	uint64_t last;   // copy at interrupt time
 	uint64_t prev;   // copy of previous last
+
+	void *area;
+	size_t mask;
 } __attribute__((aligned(64)));
 
 struct stats stats[MAX_THREADS];
@@ -58,7 +61,7 @@ static volatile unsigned int meas_count;
 static volatile uint64_t start_time;
 static unsigned int interval_usec;
 
-unsigned int (*run)(int thr, void *area, size_t mask);
+void *(*run)(void *private);
 void set_alarm(unsigned int usec);
 
 static inline void read512(const char *addr, const unsigned long ofs)
@@ -83,15 +86,18 @@ static inline void read512(const char *addr, const unsigned long ofs)
 	}
 }
 
-/* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_generic(int thr, void *area, size_t mask)
+/* runs the 512-bit test */
+void *run512_generic(void *private)
 {
+	struct stats *ctx = private;
+	size_t mask = ctx->mask;
+	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
-		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
+		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -143,7 +149,7 @@ unsigned int run512_generic(int thr, void *area, size_t mask)
 		read512(addr, 448);
 #endif
 	}
-	return rnd / 1024;
+	return NULL;
 }
 
 #ifdef __SSE2__
@@ -157,15 +163,18 @@ static inline void read512_sse(const char *addr, const unsigned long ofs)
 	             "3" (_mm_load_si128((void *)(addr + ofs +  48))));
 }
 
-/* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_sse(int thr, void *area, size_t mask)
+/* runs the 512-bit test */
+void *run512_sse(void *private)
 {
+	struct stats *ctx = private;
+	size_t mask = ctx->mask;
+	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
-		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
+		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -217,7 +226,7 @@ unsigned int run512_sse(int thr, void *area, size_t mask)
 		read512_sse(addr, 448 + RELATIVE_OFS);
 #endif
 	}
-	return rnd / 1024;
+	return NULL;
 }
 #endif
 
@@ -240,15 +249,18 @@ static inline void read1024_avx(const char *addr, const unsigned long ofs)
 	             "3" (_mm256_load_si256((void *)(addr + ofs + 96))));
 }
 
-/* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_avx(int thr, void *area, size_t mask)
+/* runs the 512-bit test */
+void *run512_avx(void *private)
 {
+	struct stats *ctx = private;
+	size_t mask = ctx->mask;
+	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
-		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
+		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -300,7 +312,7 @@ unsigned int run512_avx(int thr, void *area, size_t mask)
 		read512_avx(addr, 448 + RELATIVE_OFS);
 #endif
 	}
-	return rnd / 1024;
+	return NULL;
 }
 #endif
 
@@ -325,15 +337,18 @@ static inline void read512_vfp(const char *addr, const unsigned long ofs)
 	             : "%d4", "%d5", "%d6", "%d7");
 }
 
-/* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_vfp(int thr, void *area, size_t mask)
+/* runs the 512-bit test */
+void *run512_vfp(void *private)
 {
+	struct stats *ctx = private;
+	size_t mask = ctx->mask;
+	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
-		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
+		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -383,7 +398,7 @@ unsigned int run512_vfp(int thr, void *area, size_t mask)
 		read512_vfp(addr, 448 + RELATIVE_OFS);
 #endif
 	}
-	return rnd / 1024;
+	return NULL;
 }
 #endif
 
@@ -394,15 +409,18 @@ static inline void read512_armv7(const char *addr, const unsigned long ofs)
 	asm volatile("ldmia %0, { r4-r11 }" :: "r" (addr + ofs + 32) : "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11");
 }
 
-/* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_armv7(int thr, void *area, size_t mask)
+/* runs the 512-bit test */
+void *run512_armv7(void *private)
 {
+	struct stats *ctx = private;
+	size_t mask = ctx->mask;
+	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
-		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
+		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -452,7 +470,7 @@ unsigned int run512_armv7(int thr, void *area, size_t mask)
 		read512_armv7(addr, 448 + RELATIVE_OFS);
 #endif
 	}
-	return rnd / 1024;
+	return NULL;
 }
 #endif
 
@@ -466,15 +484,18 @@ static inline void read512_armv8(const char *addr, const unsigned long ofs)
 	             : "q0", "q1", "q2", "q3");
 }
 
-/* runs the 512-bit test using ARMv8 optimizations, returns the total number of kB read */
-unsigned int run512_armv8(int thr, void *area, size_t mask)
+/* runs the 512-bit test using ARMv8 optimizations */
+void *run512_armv8(void *private)
 {
+	struct stats *ctx = private;
+	size_t mask = ctx->mask;
+	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
-		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
+		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -524,7 +545,7 @@ unsigned int run512_armv8(int thr, void *area, size_t mask)
 		read512_armv8(addr, 448 + RELATIVE_OFS);
 #endif
 	}
-	return rnd / 1024;
+	return NULL;
 }
 #endif
 
@@ -638,7 +659,10 @@ unsigned int random_read_over_area(void *area, size_t size)
 	set_alarm(interval_usec);
 
 	set_start_time();
-	run(0, area, mask);
+
+	stats[0].area = area;
+	stats[0].mask = mask;
+	run(&stats[0]);
 
 	set_alarm(0);
 	return 0;
