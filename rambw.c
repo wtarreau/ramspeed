@@ -45,7 +45,7 @@
 /* set once the end is reached, reset when setting an alarm */
 static volatile int stop_now;
 
-unsigned int (*run)(void *area, size_t mask);
+unsigned int (*run)(int thr, void *area, size_t mask);
 
 static inline void read512(const char *addr, const unsigned long ofs)
 {
@@ -70,7 +70,7 @@ static inline void read512(const char *addr, const unsigned long ofs)
 }
 
 /* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_generic(void *area, size_t mask)
+unsigned int run512_generic(int thr, void *area, size_t mask)
 {
 	const char *addr;
 	uint64_t rnd;
@@ -143,7 +143,7 @@ static inline void read512_sse(const char *addr, const unsigned long ofs)
 }
 
 /* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_sse(void *area, size_t mask)
+unsigned int run512_sse(int thr, void *area, size_t mask)
 {
 	const char *addr;
 	uint64_t rnd;
@@ -225,7 +225,7 @@ static inline void read1024_avx(const char *addr, const unsigned long ofs)
 }
 
 /* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_avx(void *area, size_t mask)
+unsigned int run512_avx(int thr, void *area, size_t mask)
 {
 	const char *addr;
 	uint64_t rnd;
@@ -309,7 +309,7 @@ static inline void read512_vfp(const char *addr, const unsigned long ofs)
 }
 
 /* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_vfp(void *area, size_t mask)
+unsigned int run512_vfp(int thr, void *area, size_t mask)
 {
 	const char *addr;
 	uint64_t rnd;
@@ -377,7 +377,7 @@ static inline void read512_armv7(const char *addr, const unsigned long ofs)
 }
 
 /* runs the 512-bit test, returns the total number of kB read */
-unsigned int run512_armv7(void *area, size_t mask)
+unsigned int run512_armv7(int thr, void *area, size_t mask)
 {
 	const char *addr;
 	uint64_t rnd;
@@ -448,7 +448,7 @@ static inline void read512_armv8(const char *addr, const unsigned long ofs)
 }
 
 /* runs the 512-bit test using ARMv8 optimizations, returns the total number of kB read */
-unsigned int run512_armv8(void *area, size_t mask)
+unsigned int run512_armv8(int thr, void *area, size_t mask)
 {
 	const char *addr;
 	uint64_t rnd;
@@ -581,7 +581,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size)
 	before = rdtsc();
 	before += before-after;// compensate for the syscall time
 
-	rounds = run(area, mask);
+	rounds = run(0, area, mask);
 
 	after = rdtsc();
 	set_alarm(0);
