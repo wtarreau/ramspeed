@@ -624,7 +624,7 @@ void set_alarm(unsigned int usec)
 		signal(SIGALRM, alarm_handler);
 		signal(SIGVTALRM, alarm_handler);
 	}
-	setitimer(ITIMER_VIRTUAL, &timer, NULL);
+	setitimer(ITIMER_REAL, &timer, NULL);
 }
 
 /* returns a mask to cover the nearest lower power of two for <size> */
