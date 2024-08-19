@@ -51,6 +51,7 @@ struct stats {
 	uint64_t prev;   // copy of previous last
 
 	void *area;
+	size_t size;
 	size_t mask;
 	pthread_t pth;   // pthread of the thread
 	int thr;
@@ -95,10 +96,13 @@ static inline void read512(const char *addr, const unsigned long ofs)
 void *run512_generic(void *private)
 {
 	struct stats *ctx = private;
+	size_t size = ctx->size;
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
+
+	memset(area, 0, size);
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -173,10 +177,13 @@ static inline void read512_sse(const char *addr, const unsigned long ofs)
 void *run512_sse(void *private)
 {
 	struct stats *ctx = private;
+	size_t size = ctx->size;
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
+
+	memset(area, 0, size);
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -260,10 +267,13 @@ static inline void read1024_avx(const char *addr, const unsigned long ofs)
 void *run512_avx(void *private)
 {
 	struct stats *ctx = private;
+	size_t size = ctx->size;
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
+
+	memset(area, 0, size);
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -349,10 +359,13 @@ static inline void read512_vfp(const char *addr, const unsigned long ofs)
 void *run512_vfp(void *private)
 {
 	struct stats *ctx = private;
+	size_t size = ctx->size;
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
+
+	memset(area, 0, size);
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -422,10 +435,13 @@ static inline void read512_armv7(const char *addr, const unsigned long ofs)
 void *run512_armv7(void *private)
 {
 	struct stats *ctx = private;
+	size_t size = ctx->size;
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
+
+	memset(area, 0, size);
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -498,10 +514,13 @@ static inline void read512_armv8(const char *addr, const unsigned long ofs)
 void *run512_armv8(void *private)
 {
 	struct stats *ctx = private;
+	size_t size = ctx->size;
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
 	uint64_t rnd;
+
+	memset(area, 0, size);
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -659,19 +678,17 @@ static size_t mask_rounded_down(size_t size)
 	return mask >> 1;
 }
 
-/* Access aligned words of optimal size over <size> bytes of area <area> for
- * about <usec> microseconds, then returns the number of bytes read per
- * microsecond. Note: size is rounded down to the lower power of two, and must
- * be at least 4kB.
+/* Access aligned words of optimal size over <size> bytes for each thread.
+ * Note: size is rounded down to the lower power of two, and must be at
+ * least 4kB.
  */
-unsigned int random_read_over_area(void *area, size_t size)
+unsigned int random_read_over_area(size_t size)
 {
 	size_t mask;
 	int thr;
 
 	mask = mask_rounded_down(size);
 
-	memset(area, 0, size);
 
 	if (!run)
 		return 0;
@@ -682,10 +699,17 @@ unsigned int random_read_over_area(void *area, size_t size)
 
 	/* create threads for thread 1 and above */
 	for (thr = 0; thr < nbthreads; thr++) {
-		stats[thr].area = area;
+		stats[thr].size = size;
 		stats[thr].mask = mask;
 		stats[thr].thr = thr;
-		stats[thr].rnd = thr * size / nbthreads;
+		stats[thr].rnd = 0;
+
+		stats[thr].area = memalign(size / 4, size);
+		if (!stats[thr].area) {
+			printf("Failed to allocate memory for thread %d\n", thr);
+			exit(1);
+		}
+
 		if (thr > 0 && pthread_create(&stats[thr].pth, NULL, run, &stats[thr]) < 0) {
 			fprintf(stderr, "Failed to start thread #%d; aborting.\n", thr);
 			exit(1);
@@ -702,7 +726,6 @@ int main(int argc, char **argv)
 {
 	unsigned int usec;
 	size_t size;
-	void *area;
 	int slowstart = 0;
 	int implementation;
 
@@ -767,8 +790,8 @@ int main(int argc, char **argv)
 #endif
 		else {
 			fprintf(stderr,
-				"Usage: prog [options]* [<time_ms> [<count> [<area>]]]\n"
-				"  -t <threads> : start this number of threads.\n"
+				"Usage: prog [options]* [<time_ms> [<count> [<area_per_thread>]]]\n"
+				"  -t <threads> : start this number of threads each with its own area.\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
 				"  -h : show this help\n"
 				"  -G : use generic code only\n"
@@ -831,26 +854,19 @@ int main(int argc, char **argv)
 	}
 #endif
 
-	area = memalign(size / 4, size);
-	if (!area) {
-		printf("Failed to allocate memory\n");
-		exit(1);
-	}
-
 	if (slowstart) {
 		interval_usec = 0; // stop on first wakeup
 		set_alarm(500000);
-		memset(area, 0, size);
 		while (!stop_now);
 		set_alarm(0);
 	}
 
 	interval_usec = usec;
 	meas_count = meas_count > 0 ? meas_count : 1;
-	if (nbthreads > MAX_THREADS) {
-		fprintf(stderr, "Fatal: too many threads, max is %d.\n", MAX_THREADS);
+	if (nbthreads < 1 || nbthreads > MAX_THREADS) {
+		fprintf(stderr, "Fatal: invalid number of threads, accepted range is 1..%d.\n", MAX_THREADS);
 		exit(1);
 	}
-	random_read_over_area(area, size);
+	random_read_over_area(size);
 	exit(0);
 }
