@@ -54,8 +54,9 @@ struct stats stats[MAX_THREADS];
 
 /* set once the end is reached, reset when setting an alarm */
 static volatile int stop_now;
+static volatile unsigned int meas_count;
+static volatile uint64_t start_time;
 static unsigned int interval_usec;
-static unsigned int meas_count;
 
 unsigned int (*run)(int thr, void *area, size_t mask);
 void set_alarm(unsigned int usec);
@@ -541,18 +542,51 @@ static inline uint64_t rdtsc()
 	return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
+/* sets the start_time() value as accurately as possible */
+static inline void set_start_time()
+{
+	uint64_t before, after;
+
+	after = rdtsc();
+	before = rdtsc();
+	// compensate for the syscall time
+	before += before - after;
+	start_time = before;
+}
+
 /* If interval_usec is zero, just marks the alarm as received, otherwise
  * prints stats and rearms the timer for the same duration.
  */
 void alarm_handler(int sig)
 {
-	if (interval_usec && --meas_count) {
+	if (interval_usec) {
+		uint64_t now, usec, rounds;
+
+		/* measure the time since last pass */
+		now = rdtsc();
+
 		stats[0].last = stats[0].rnd;
-		//printf("%llu\n", stats[0].last - stats[0].prev);
+		rounds = stats[0].last - stats[0].prev;
 		stats[0].prev = stats[0].last;
-		set_alarm(interval_usec);
+
+		/* speed = rounds per microsecond. Use 64-bit computations to avoid
+		 * overflows.
+		 */
+		usec = now - start_time;
+		if (usec < 1)
+			usec = 1;
+
+		rounds /= usec; // express it in B/us = MB/s
+		printf("%llu\n", (unsigned long long)rounds);
+
+		if (meas_count && --meas_count) {
+			/* rearm the timer for another measure */
+			start_time = now;
+			set_alarm(interval_usec);
+		}
 	}
-	else
+
+	if (!interval_usec || !meas_count)
 		stop_now = 1;
 }
 
@@ -593,37 +627,21 @@ static size_t mask_rounded_down(size_t size)
 unsigned int random_read_over_area(void *area, size_t size)
 {
 	size_t mask;
-	uint64_t rounds;
-	unsigned int usec;
-	uint64_t before, after;
 
 	mask = mask_rounded_down(size);
 
 	memset(area, 0, size);
-	rounds = 0;
 
 	if (!run)
 		return 0;
 
 	set_alarm(interval_usec);
-	after = rdtsc();
-	before = rdtsc();
-	before += before-after;// compensate for the syscall time
 
-	rounds = run(0, area, mask);
+	set_start_time();
+	run(0, area, mask);
 
-	after = rdtsc();
 	set_alarm(0);
-
-	/* speed = rounds per microsecond. Use 64-bit computations to avoid
-	 * overflows.
-	 */
-	usec = after - before;
-	if (usec < 1)
-		usec = 1;
-
-	rounds *= 1024;
-	return rounds / usec;
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -631,7 +649,6 @@ int main(int argc, char **argv)
 	unsigned int usec;
 	size_t size;
 	void *area;
-	unsigned int ret;
 	int slowstart = 0;
 	int implementation;
 
@@ -771,7 +788,7 @@ int main(int argc, char **argv)
 
 	interval_usec = usec;
 	meas_count = meas_count > 0 ? meas_count : 1;
-	ret = random_read_over_area(area, size);
-	printf("%6u\n", ret);
+
+	random_read_over_area(area, size);
 	exit(0);
 }
