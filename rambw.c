@@ -11,6 +11,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MAX_THREADS 1024
+
 #if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
 #define HAS_MANY_REGISTERS 0
 #else
@@ -41,6 +43,14 @@
 #define USE_ARMV7   4
 #define USE_ARMV8   8
 #define USE_AVX    16
+
+struct stats {
+	uint64_t rnd;    // work value
+	uint64_t last;   // copy at interrupt time
+	uint64_t prev;   // copy of previous last
+} __attribute__((aligned(64)));
+
+struct stats stats[MAX_THREADS];
 
 /* set once the end is reached, reset when setting an alarm */
 static volatile int stop_now;
@@ -77,6 +87,7 @@ unsigned int run512_generic(int thr, void *area, size_t mask)
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
+		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -150,6 +161,7 @@ unsigned int run512_sse(int thr, void *area, size_t mask)
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
+		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -232,6 +244,7 @@ unsigned int run512_avx(int thr, void *area, size_t mask)
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
+		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -316,6 +329,7 @@ unsigned int run512_vfp(int thr, void *area, size_t mask)
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
+		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -384,6 +398,7 @@ unsigned int run512_armv7(int thr, void *area, size_t mask)
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
+		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
@@ -455,6 +470,7 @@ unsigned int run512_armv8(int thr, void *area, size_t mask)
 
 	area -= RELATIVE_OFS;
 	for (rnd = 0; !stop_now; ) {
+		__atomic_store_n(&stats[thr].rnd, rnd, __ATOMIC_RELEASE);
 		addr = area + (rnd & mask);
 		rnd += BYTES_PER_ROUND;
 
