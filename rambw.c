@@ -54,8 +54,11 @@ struct stats stats[MAX_THREADS];
 
 /* set once the end is reached, reset when setting an alarm */
 static volatile int stop_now;
+static unsigned int interval_usec;
+static unsigned int meas_count;
 
 unsigned int (*run)(int thr, void *area, size_t mask);
+void set_alarm(unsigned int usec);
 
 static inline void read512(const char *addr, const unsigned long ofs)
 {
@@ -538,10 +541,19 @@ static inline uint64_t rdtsc()
 	return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
-/* just marks the alarm as received */
+/* If interval_usec is zero, just marks the alarm as received, otherwise
+ * prints stats and rearms the timer for the same duration.
+ */
 void alarm_handler(int sig)
 {
-	stop_now = 1;
+	if (interval_usec && --meas_count) {
+		stats[0].last = stats[0].rnd;
+		//printf("%llu\n", stats[0].last - stats[0].prev);
+		stats[0].prev = stats[0].last;
+		set_alarm(interval_usec);
+	}
+	else
+		stop_now = 1;
 }
 
 /* sets an alarm to trigger after <usec> microseconds. 0 disables it */
@@ -578,10 +590,11 @@ static size_t mask_rounded_down(size_t size)
  * microsecond. Note: size is rounded down to the lower power of two, and must
  * be at least 4kB.
  */
-unsigned int random_read_over_area(void *area, unsigned int usec, size_t size)
+unsigned int random_read_over_area(void *area, size_t size)
 {
 	size_t mask;
 	uint64_t rounds;
+	unsigned int usec;
 	uint64_t before, after;
 
 	mask = mask_rounded_down(size);
@@ -592,7 +605,7 @@ unsigned int random_read_over_area(void *area, unsigned int usec, size_t size)
 	if (!run)
 		return 0;
 
-	set_alarm(usec);
+	set_alarm(interval_usec);
 	after = rdtsc();
 	before = rdtsc();
 	before += before-after;// compensate for the syscall time
@@ -679,7 +692,7 @@ int main(int argc, char **argv)
 #endif
 		else {
 			fprintf(stderr,
-				"Usage: prog [options]* <time_ms> <area>\n"
+				"Usage: prog [options]* [<time_ms> [<count> [<area>]]]\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
 				"  -h : show this help\n"
 				"  -G : use generic code only\n"
@@ -709,7 +722,10 @@ int main(int argc, char **argv)
 		usec = atoi(argv[1]) * 1000;
 
 	if (argc > 2)
-		size = atol(argv[2]) * 1024;
+		meas_count = atoi(argv[2]);
+
+	if (argc > 3)
+		size = atol(argv[3]) * 1024;
 
 	run = run512_generic;
 
@@ -746,13 +762,16 @@ int main(int argc, char **argv)
 	}
 
 	if (slowstart) {
+		interval_usec = 0; // stop on first wakeup
 		set_alarm(500000);
 		memset(area, 0, size);
 		while (!stop_now);
 		set_alarm(0);
 	}
 
-	ret = random_read_over_area(area, usec, size);
+	interval_usec = usec;
+	meas_count = meas_count > 0 ? meas_count : 1;
+	ret = random_read_over_area(area, size);
 	printf("%6u\n", ret);
 	exit(0);
 }
