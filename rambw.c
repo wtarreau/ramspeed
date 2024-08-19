@@ -2,6 +2,7 @@
 #include <x86intrin.h>
 #endif
 
+#include <sys/mman.h>
 #include <sys/time.h>
 #include <malloc.h>
 #include <pthread.h>
@@ -66,6 +67,7 @@ static volatile uint64_t start_time;
 static unsigned int interval_usec;
 static int nbthreads = 1;
 static __thread int thread_num;
+static int no_hugepages;
 
 void *(*run)(void *private);
 void set_alarm(unsigned int usec);
@@ -710,6 +712,15 @@ unsigned int random_read_over_area(size_t size)
 			exit(1);
 		}
 
+#ifdef MADV_DONTDUMP
+		madvise(stats[thr].area, size, MADV_DONTDUMP);
+#endif
+#ifdef MADV_HUGEPAGE
+		if (no_hugepages)
+			madvise(stats[thr].area, size, MADV_NOHUGEPAGE);
+		else
+			madvise(stats[thr].area, size, MADV_HUGEPAGE);
+#endif
 		if (thr > 0 && pthread_create(&stats[thr].pth, NULL, run, &stats[thr]) < 0) {
 			fprintf(stderr, "Failed to start thread #%d; aborting.\n", thr);
 			exit(1);
@@ -756,6 +767,9 @@ int main(int argc, char **argv)
 		if (strcmp(argv[1], "-s") == 0) {
 			slowstart = 1;
 		}
+		else if (strcmp(argv[1], "-H") == 0) {
+			no_hugepages = 1;
+		}
 		else if (strcmp(argv[1], "-t") == 0 && argc > 2) {
 			nbthreads = atoi(argv[2]);
 			argc--; argv++;
@@ -793,6 +807,9 @@ int main(int argc, char **argv)
 				"Usage: prog [options]* [<time_ms> [<count> [<area_per_thread>]]]\n"
 				"  -t <threads> : start this number of threads each with its own area.\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
+#ifdef MADV_HUGEPAGE
+				"  -H : disable Huge Pages when supported\n"
+#endif
 				"  -h : show this help\n"
 				"  -G : use generic code only\n"
 #ifdef __SSE2__
