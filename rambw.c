@@ -53,9 +53,9 @@
 #define USE_AVX    16
 
 struct stats {
-	uint64_t rnd;    // work value
-	uint64_t last;   // copy at interrupt time
-	uint64_t prev;   // copy of previous last
+	unsigned long last;   // copy at interrupt time
+	unsigned long prev;   // copy of previous last
+	unsigned long rnd;    // work value
 
 	void *area;
 	size_t size;
@@ -135,7 +135,7 @@ void *run512_generic(void *private)
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
-	uint64_t rnd;
+	unsigned long rnd;
 
 	thread_num = ctx->thr;
 	thread_sync_startup(area, size, thread_num);
@@ -216,7 +216,7 @@ void *run512_sse(void *private)
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
-	uint64_t rnd;
+	unsigned long rnd;
 
 	thread_num = ctx->thr;
 	thread_sync_startup(area, size, thread_num);
@@ -306,7 +306,7 @@ void *run512_avx(void *private)
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
-	uint64_t rnd;
+	unsigned long rnd;
 
 	thread_num = ctx->thr;
 	thread_sync_startup(area, size, thread_num);
@@ -398,7 +398,7 @@ void *run512_vfp(void *private)
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
-	uint64_t rnd;
+	unsigned long rnd;
 
 	thread_num = ctx->thr;
 	thread_sync_startup(area, size, thread_num);
@@ -474,7 +474,7 @@ void *run512_armv7(void *private)
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
-	uint64_t rnd;
+	unsigned long rnd;
 
 	thread_num = ctx->thr;
 	thread_sync_startup(area, size, thread_num);
@@ -553,7 +553,7 @@ void *run512_armv8(void *private)
 	size_t mask = ctx->mask;
 	void *area = ctx->area;
 	const char *addr;
-	uint64_t rnd;
+	unsigned long rnd;
 
 	thread_num = ctx->thr;
 	thread_sync_startup(area, size, thread_num);
@@ -661,8 +661,7 @@ void alarm_handler(int sig)
 
 	for (rounds = thr = 0; thr < nbthreads; thr++) {
 		stats[thr].last = stats[thr].rnd;
-		//printf("thr %d : %llu\n", thr, stats[thr].last - stats[thr].prev);
-		rounds += stats[thr].last - stats[thr].prev;
+		rounds += (unsigned long)(stats[thr].last - stats[thr].prev);
 		stats[thr].prev = stats[thr].last;
 	}
 
