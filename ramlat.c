@@ -1,5 +1,4 @@
 #include <sys/time.h>
-#include <malloc.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -733,8 +732,7 @@ int main(int argc, char **argv)
 	run[6] = run_4ptr_generic;  name[6] = "4xPTR";
 	run[7] = run_8ptr_generic;  name[7] = "8xPTR";
 
-	area = memalign(size_max / 4, size_max);
-	if (!area) {
+	if (posix_memalign(&area, size_max / 4, size_max) != 0 || !area) {
 		printf("Failed to allocate memory\n");
 		exit(1);
 	}

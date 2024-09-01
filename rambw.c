@@ -10,7 +10,6 @@
 
 #include <sys/mman.h>
 #include <sys/time.h>
-#include <malloc.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
@@ -741,8 +740,7 @@ unsigned int random_read_over_area(size_t size)
 		stats[thr].thr = thr;
 		stats[thr].rnd = 0;
 
-		stats[thr].area = memalign(size / 4, size);
-		if (!stats[thr].area) {
+		if (posix_memalign(&stats[thr].area, size / 4, size) != 0 || !stats[thr].area) {
 			printf("Failed to allocate memory for thread %d\n", thr);
 			exit(1);
 		}
