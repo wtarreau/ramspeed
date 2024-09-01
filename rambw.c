@@ -789,7 +789,7 @@ int main(int argc, char **argv)
 	implementation |= USE_ARMV8;
 #endif
 	usec = 100000;
-	size = 16 * 1048576;
+	size = 0;
 
 	while (argc > 1 && *argv[1] == '-') {
 		if (strcmp(argv[1], "-s") == 0) {
@@ -855,7 +855,7 @@ int main(int argc, char **argv)
 #if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
 				"  -8 : use ARMv8\n"
 #endif
-				"");
+				"Defaults: time=100ms, count=1, size=16MB per thread\n");
 			exit(!!strcmp(argv[1], "-h"));
 		}
 		argc--;
@@ -870,6 +870,9 @@ int main(int argc, char **argv)
 
 	if (argc > 3)
 		size = atol(argv[3]) * 1024;
+
+	if (!size)
+		size = nbthreads * 16 * 1048576;
 
 	run = run512_generic;
 
