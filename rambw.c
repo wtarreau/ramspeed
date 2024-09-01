@@ -631,6 +631,7 @@ static inline void set_start_time()
  */
 void alarm_handler(int sig)
 {
+	uint64_t now, usec, rounds;
 	int thr;
 
 	//printf("thread_num=%d\n", thread_num);
@@ -641,38 +642,34 @@ void alarm_handler(int sig)
 		return;
 	}
 
-	if (interval_usec) {
-		uint64_t now, usec, rounds;
+	/* measure the time since last pass, only on first thread */
+	now = rdtsc();
 
-		/* measure the time since last pass, only on first thread */
-		now = rdtsc();
-
-		for (rounds = thr = 0; thr < nbthreads; thr++) {
-			stats[thr].last = stats[thr].rnd;
-			//printf("thr %d : %llu\n", thr, stats[thr].last - stats[thr].prev);
-			rounds += stats[thr].last - stats[thr].prev;
-			stats[thr].prev = stats[thr].last;
-		}
-
-		/* speed = rounds per microsecond. Use 64-bit computations to avoid
-		 * overflows.
-		 */
-		usec = now - start_time;
-		if (usec < 1)
-			usec = 1;
-
-		rounds /= usec; // express it in B/us = MB/s
-		printf("%llu\n", (unsigned long long)rounds);
-		//printf("now=%llu usec=%llu %llu intv=%d\n", now, usec, (unsigned long long)rounds);
-
-		if (meas_count && --meas_count) {
-			/* rearm the timer for another measure */
-			start_time = now;
-			set_alarm(interval_usec);
-		}
+	for (rounds = thr = 0; thr < nbthreads; thr++) {
+		stats[thr].last = stats[thr].rnd;
+		//printf("thr %d : %llu\n", thr, stats[thr].last - stats[thr].prev);
+		rounds += stats[thr].last - stats[thr].prev;
+		stats[thr].prev = stats[thr].last;
 	}
 
-	if (!interval_usec || !meas_count)
+	/* speed = rounds per microsecond. Use 64-bit computations to avoid
+	 * overflows.
+	 */
+	usec = now - start_time;
+	if (usec < 1)
+		usec = 1;
+
+	rounds /= usec; // express it in B/us = MB/s
+	printf("%llu\n", (unsigned long long)rounds);
+	//printf("now=%llu usec=%llu %llu intv=%d\n", now, usec, (unsigned long long)rounds);
+
+	if (meas_count && --meas_count) {
+		/* rearm the timer for another measure */
+		start_time = now;
+		set_alarm(interval_usec);
+	}
+
+	if (!meas_count)
 		stop_now = 1;
 }
 
