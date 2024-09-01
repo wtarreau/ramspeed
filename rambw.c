@@ -70,6 +70,7 @@ struct stats stats[MAX_THREADS];
 static volatile int slowstart;
 static volatile int stop_now;
 static volatile unsigned int meas_count;
+static volatile unsigned int skip_measures;
 static volatile uint64_t start_time;
 static unsigned int interval_usec;
 static int nbthreads = 1;
@@ -673,7 +674,11 @@ void alarm_handler(int sig)
 		usec = 1;
 
 	rounds /= usec; // express it in B/us = MB/s
-	printf("%llu\n", (unsigned long long)rounds);
+	if (!skip_measures)
+		printf("%llu\n", (unsigned long long)rounds);
+	else
+		skip_measures--;
+
 	//printf("now=%llu usec=%llu %llu intv=%d\n", now, usec, (unsigned long long)rounds);
 
 	if (meas_count && --meas_count) {
@@ -864,7 +869,7 @@ int main(int argc, char **argv)
 			fprintf(stderr,
 				"Usage: prog [options]* [<time_ms> [<count> [<size_kB>]]]\n"
 				"  -t <threads> : start this number of threads (default: %d)\n"
-				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
+				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt and skip 1st value.\n"
 #ifdef MADV_HUGEPAGE
 				"  -H : disable Huge Pages when supported\n"
 #endif
@@ -934,7 +939,10 @@ int main(int argc, char **argv)
 #endif
 
 	interval_usec = usec;
+	if (slowstart)
+		skip_measures = 1;
 	meas_count = meas_count > 0 ? meas_count : 1;
+	meas_count += skip_measures;
 	if (nbthreads < 1 || nbthreads > MAX_THREADS) {
 		fprintf(stderr, "Fatal: invalid number of threads, accepted range is 1..%d.\n", MAX_THREADS);
 		exit(1);
