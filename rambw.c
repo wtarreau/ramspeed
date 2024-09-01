@@ -1,3 +1,9 @@
+#ifdef __linux__
+/* for sched_getaffinity() */
+#define _GNU_SOURCE
+#include <sched.h>
+#endif
+
 #ifdef __SSE2__
 #include <x86intrin.h>
 #endif
@@ -762,6 +768,18 @@ unsigned int random_read_over_area(size_t size)
 	return 0;
 }
 
+/* return the default thread count based on the detected affinity settings. */
+int default_thread_count()
+{
+#if defined(__linux__) && defined(CPU_COUNT)
+       cpu_set_t mask;
+
+       if (sched_getaffinity(0, sizeof(mask), &mask) == 0)
+               return CPU_COUNT(&mask);
+#endif
+       return 1;
+}
+
 int main(int argc, char **argv)
 {
 	unsigned int usec;
@@ -790,6 +808,8 @@ int main(int argc, char **argv)
 #endif
 	usec = 100000;
 	size = 0;
+
+	nbthreads = default_thread_count();
 
 	while (argc > 1 && *argv[1] == '-') {
 		if (strcmp(argv[1], "-s") == 0) {
@@ -833,7 +853,7 @@ int main(int argc, char **argv)
 		else {
 			fprintf(stderr,
 				"Usage: prog [options]* [<time_ms> [<count> [<size_kB>]]]\n"
-				"  -t <threads> : start this number of threads each with its own area.\n"
+				"  -t <threads> : start this number of threads (default: %d)\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
 #ifdef MADV_HUGEPAGE
 				"  -H : disable Huge Pages when supported\n"
@@ -855,7 +875,8 @@ int main(int argc, char **argv)
 #if defined(__ARM_ARCH_8A) || defined(__AARCH64EL__)
 				"  -8 : use ARMv8\n"
 #endif
-				"Defaults: time=100ms, count=1, size=16MB per thread\n");
+				"Defaults: time=100ms, count=1, size=16MB per thread\n",
+				default_thread_count());
 			exit(!!strcmp(argv[1], "-h"));
 		}
 		argc--;
