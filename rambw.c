@@ -61,6 +61,7 @@ struct stats {
 struct stats stats[MAX_THREADS];
 
 /* set once the end is reached, reset when setting an alarm */
+static volatile int slowstart;
 static volatile int stop_now;
 static volatile unsigned int meas_count;
 static volatile uint64_t start_time;
@@ -105,6 +106,9 @@ void *run512_generic(void *private)
 	uint64_t rnd;
 
 	memset(area, 0, size);
+
+	while (slowstart)
+		;
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -186,6 +190,9 @@ void *run512_sse(void *private)
 	uint64_t rnd;
 
 	memset(area, 0, size);
+
+	while (slowstart)
+		;
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -276,6 +283,9 @@ void *run512_avx(void *private)
 	uint64_t rnd;
 
 	memset(area, 0, size);
+
+	while (slowstart)
+		;
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -369,6 +379,9 @@ void *run512_vfp(void *private)
 
 	memset(area, 0, size);
 
+	while (slowstart)
+		;
+
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
 	for (rnd = ctx->rnd; !stop_now; ) {
@@ -444,6 +457,9 @@ void *run512_armv7(void *private)
 	uint64_t rnd;
 
 	memset(area, 0, size);
+
+	while (slowstart)
+		;
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -523,6 +539,9 @@ void *run512_armv8(void *private)
 	uint64_t rnd;
 
 	memset(area, 0, size);
+
+	while (slowstart)
+		;
 
 	thread_num = ctx->thr;
 	area -= RELATIVE_OFS;
@@ -616,6 +635,12 @@ void alarm_handler(int sig)
 
 	//printf("thread_num=%d\n", thread_num);
 
+	if (slowstart) {
+		/* that was the pre-heating phase */
+		slowstart = 0;
+		return;
+	}
+
 	if (interval_usec) {
 		uint64_t now, usec, rounds;
 
@@ -695,10 +720,6 @@ unsigned int random_read_over_area(size_t size)
 	if (!run)
 		return 0;
 
-	set_alarm(interval_usec);
-
-	set_start_time();
-
 	/* create threads for thread 1 and above */
 	for (thr = 0; thr < nbthreads; thr++) {
 		stats[thr].size = size;
@@ -727,6 +748,17 @@ unsigned int random_read_over_area(size_t size)
 		}
 	}
 
+	if (slowstart) {
+		set_alarm(500000);
+		while (slowstart)
+			;
+		set_alarm(0);
+	}
+
+	set_alarm(interval_usec);
+
+	set_start_time();
+
 	run(&stats[0]);
 
 	set_alarm(0);
@@ -737,7 +769,6 @@ int main(int argc, char **argv)
 {
 	unsigned int usec;
 	size_t size, size_thr;
-	int slowstart = 0;
 	int implementation;
 
 	/* set default implementation bits */
@@ -870,13 +901,6 @@ int main(int argc, char **argv)
 		run = run512_armv8;
 	}
 #endif
-
-	if (slowstart) {
-		interval_usec = 0; // stop on first wakeup
-		set_alarm(500000);
-		while (!stop_now);
-		set_alarm(0);
-	}
 
 	interval_usec = usec;
 	meas_count = meas_count > 0 ? meas_count : 1;
