@@ -736,7 +736,7 @@ unsigned int random_read_over_area(size_t size)
 int main(int argc, char **argv)
 {
 	unsigned int usec;
-	size_t size;
+	size_t size, size_thr;
 	int slowstart = 0;
 	int implementation;
 
@@ -804,7 +804,7 @@ int main(int argc, char **argv)
 #endif
 		else {
 			fprintf(stderr,
-				"Usage: prog [options]* [<time_ms> [<count> [<area_per_thread>]]]\n"
+				"Usage: prog [options]* [<time_ms> [<count> [<size_kB>]]]\n"
 				"  -t <threads> : start this number of threads each with its own area.\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt\n"
 #ifdef MADV_HUGEPAGE
@@ -884,6 +884,22 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Fatal: invalid number of threads, accepted range is 1..%d.\n", MAX_THREADS);
 		exit(1);
 	}
-	random_read_over_area(size);
+
+	size_thr = size / nbthreads;
+
+	/* round it down to the largest power of 2 */
+	while (size_thr & (size_thr - 1))
+		size_thr = size_thr & (size_thr - 1);
+
+	if (size_thr < 1024) {
+		fprintf(stderr, "Fatal: too small area size, minimum is 1kB per thread\n");
+		exit(1);
+	}
+
+	if (size_thr * nbthreads != size)
+		fprintf(stderr, "Notice: using %lu bytes per thread (%lu kB total)\n",
+			(unsigned long)size_thr, (unsigned long)(size_thr * nbthreads) / 1024);
+
+	random_read_over_area(size_thr);
 	exit(0);
 }
