@@ -73,11 +73,36 @@ static volatile unsigned int meas_count;
 static volatile uint64_t start_time;
 static unsigned int interval_usec;
 static int nbthreads = 1;
+static int ready_threads;
 static __thread int thread_num;
 static int no_hugepages;
 
 void *(*run)(void *private);
 void set_alarm(unsigned int usec);
+
+/* Prepare startup, report thread as ready and wait for notification. Thread
+ * zero is supposed to be already initialized (main thread). Just call with
+ * thread_num < 0 to initialize without waiting for end of slowstart.
+ */
+static void thread_sync_startup(void *area, size_t size, int thread_num)
+{
+	if (!thread_num)
+		return;
+
+	memset(area, 0, size);
+
+	__atomic_add_fetch(&ready_threads, 1, __ATOMIC_SEQ_CST);
+
+	/* wait for all threads to be started */
+	while (__atomic_load_n(&ready_threads, __ATOMIC_ACQUIRE) != nbthreads)
+		;
+
+	if (thread_num < 0)
+		return;
+
+	while (slowstart)
+		;
+}
 
 static inline void read512(const char *addr, const unsigned long ofs)
 {
@@ -111,12 +136,9 @@ void *run512_generic(void *private)
 	const char *addr;
 	uint64_t rnd;
 
-	memset(area, 0, size);
-
-	while (slowstart)
-		;
-
 	thread_num = ctx->thr;
+	thread_sync_startup(area, size, thread_num);
+
 	area -= RELATIVE_OFS;
 	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -195,12 +217,9 @@ void *run512_sse(void *private)
 	const char *addr;
 	uint64_t rnd;
 
-	memset(area, 0, size);
-
-	while (slowstart)
-		;
-
 	thread_num = ctx->thr;
+	thread_sync_startup(area, size, thread_num);
+
 	area -= RELATIVE_OFS;
 	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -288,12 +307,9 @@ void *run512_avx(void *private)
 	const char *addr;
 	uint64_t rnd;
 
-	memset(area, 0, size);
-
-	while (slowstart)
-		;
-
 	thread_num = ctx->thr;
+	thread_sync_startup(area, size, thread_num);
+
 	area -= RELATIVE_OFS;
 	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -383,12 +399,9 @@ void *run512_vfp(void *private)
 	const char *addr;
 	uint64_t rnd;
 
-	memset(area, 0, size);
-
-	while (slowstart)
-		;
-
 	thread_num = ctx->thr;
+	thread_sync_startup(area, size, thread_num);
+
 	area -= RELATIVE_OFS;
 	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -462,12 +475,9 @@ void *run512_armv7(void *private)
 	const char *addr;
 	uint64_t rnd;
 
-	memset(area, 0, size);
-
-	while (slowstart)
-		;
-
 	thread_num = ctx->thr;
+	thread_sync_startup(area, size, thread_num);
+
 	area -= RELATIVE_OFS;
 	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -544,12 +554,9 @@ void *run512_armv8(void *private)
 	const char *addr;
 	uint64_t rnd;
 
-	memset(area, 0, size);
-
-	while (slowstart)
-		;
-
 	thread_num = ctx->thr;
+	thread_sync_startup(area, size, thread_num);
+
 	area -= RELATIVE_OFS;
 	for (rnd = ctx->rnd; !stop_now; ) {
 		__atomic_store_n(&ctx->rnd, rnd, __ATOMIC_RELEASE);
@@ -750,6 +757,9 @@ unsigned int random_read_over_area(size_t size)
 			exit(1);
 		}
 	}
+
+	/* initialize thread 0's area and do not wait for slowstart */
+	thread_sync_startup(stats[0].area, size, -1);
 
 	if (slowstart) {
 		set_alarm(500000);
