@@ -1,4 +1,5 @@
 #include <sys/time.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -19,6 +20,14 @@ static volatile int stop_now;
  */
 static unsigned int (*run[10])(void *area);
 static const char *name[10];
+
+#if (_POSIX_MEMORY_PROTECTION - 0 < 200112L)
+static inline int posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+	*(memptr) = memalign(alignment, size);
+	return (*memptr) ? 0 : ENOMEM;
+}
+#endif
 
 static inline uint32_t rbit32(uint32_t x)
 {

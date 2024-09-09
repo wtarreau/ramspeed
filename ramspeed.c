@@ -1,4 +1,5 @@
 #include <sys/time.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,15 @@ struct test_fct {
 	const char *name;
 	unsigned int (*f)(unsigned int, unsigned int);
 };
+
+
+#if (_POSIX_MEMORY_PROTECTION - 0 < 200112L)
+static inline int posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+	*(memptr) = memalign(alignment, size);
+	return (*memptr) ? 0 : ENOMEM;
+}
+#endif
 
 static inline unsigned long long rdtsc()
 {

@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -79,6 +80,14 @@ static int no_hugepages;
 
 void *(*run)(void *private);
 void set_alarm(unsigned int usec);
+
+#if (_POSIX_MEMORY_PROTECTION - 0 < 200112L)
+static inline int posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+	*(memptr) = memalign(alignment, size);
+	return (*memptr) ? 0 : ENOMEM;
+}
+#endif
 
 /* Prepare startup, report thread as ready and wait for notification. Thread
  * zero is supposed to be already initialized (main thread). Just call with
