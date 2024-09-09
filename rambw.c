@@ -805,7 +805,7 @@ int main(int argc, char **argv)
 {
 	unsigned int usec;
 	size_t size, size_thr;
-	int implementation;
+	int implementation __attribute__((unused));
 
 	/* set default implementation bits */
 	implementation = USE_GENERIC;
