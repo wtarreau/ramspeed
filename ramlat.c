@@ -29,7 +29,7 @@ static inline int posix_memalign(void **memptr, size_t alignment, size_t size)
 }
 #endif
 
-static inline uint32_t rbit32(uint32_t x)
+static inline __attribute__((unused)) uint32_t rbit32(uint32_t x)
 {
 #ifdef __aarch64__
 	asm volatile("rbit %w0, %w1\n" : "=r"(x) : "r"(x));
@@ -47,7 +47,7 @@ static inline uint32_t rbit32(uint32_t x)
 	return x;
 }
 
-static inline uint64_t rbit64(uint64_t x)
+static inline __attribute__((unused)) uint64_t rbit64(uint64_t x)
 {
 #ifdef __aarch64__
 	asm volatile("rbit %0, %1\n" : "=r"(x) : "r"(x));
