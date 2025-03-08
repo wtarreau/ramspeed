@@ -162,44 +162,44 @@ void *run512_generic(void *private)
 		read512(addr,  192 + RELATIVE_OFS);
 
 #if BYTES_PER_ROUND > 256
-		read512(addr, 256);
-		read512(addr, 320);
-		read512(addr, 384);
-		read512(addr, 448);
+		read512(addr, 256 + RELATIVE_OFS);
+		read512(addr, 320 + RELATIVE_OFS);
+		read512(addr, 384 + RELATIVE_OFS);
+		read512(addr, 448 + RELATIVE_OFS);
 #endif
 
 #if BYTES_PER_ROUND > 512
 		addr += 512;
-		read512(addr,   0);
-		read512(addr,  64);
-		read512(addr, 128);
-		read512(addr, 192);
-		read512(addr, 256);
-		read512(addr, 320);
-		read512(addr, 384);
-		read512(addr, 448);
+		read512(addr,   0 + RELATIVE_OFS);
+		read512(addr,  64 + RELATIVE_OFS);
+		read512(addr, 128 + RELATIVE_OFS);
+		read512(addr, 192 + RELATIVE_OFS);
+		read512(addr, 256 + RELATIVE_OFS);
+		read512(addr, 320 + RELATIVE_OFS);
+		read512(addr, 384 + RELATIVE_OFS);
+		read512(addr, 448 + RELATIVE_OFS);
 #endif
 
 #if BYTES_PER_ROUND > 1024
 		addr += 512;
-		read512(addr,   0);
-		read512(addr,  64);
-		read512(addr, 128);
-		read512(addr, 192);
-		read512(addr, 256);
-		read512(addr, 320);
-		read512(addr, 384);
-		read512(addr, 448);
+		read512(addr,   0 + RELATIVE_OFS);
+		read512(addr,  64 + RELATIVE_OFS);
+		read512(addr, 128 + RELATIVE_OFS);
+		read512(addr, 192 + RELATIVE_OFS);
+		read512(addr, 256 + RELATIVE_OFS);
+		read512(addr, 320 + RELATIVE_OFS);
+		read512(addr, 384 + RELATIVE_OFS);
+		read512(addr, 448 + RELATIVE_OFS);
 
 		addr += 512;
-		read512(addr,   0);
-		read512(addr,  64);
-		read512(addr, 128);
-		read512(addr, 192);
-		read512(addr, 256);
-		read512(addr, 320);
-		read512(addr, 384);
-		read512(addr, 448);
+		read512(addr,   0 + RELATIVE_OFS);
+		read512(addr,  64 + RELATIVE_OFS);
+		read512(addr, 128 + RELATIVE_OFS);
+		read512(addr, 192 + RELATIVE_OFS);
+		read512(addr, 256 + RELATIVE_OFS);
+		read512(addr, 320 + RELATIVE_OFS);
+		read512(addr, 384 + RELATIVE_OFS);
+		read512(addr, 448 + RELATIVE_OFS);
 #endif
 	}
 	return NULL;
