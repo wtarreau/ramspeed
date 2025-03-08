@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #define LOOPS_PER_ROUND 1048576
 
@@ -563,9 +564,15 @@ unsigned int run_2w64_generic(void *area)
 /* returns a timestamp in microseconds */
 static inline uint64_t rdtsc()
 {
+#ifdef CLOCK_MONOTONIC
+	struct timespec tv;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+	return (tv.tv_sec * 1000000000ULL + tv.tv_nsec) / 1000ULL;
+#else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec * 1000000 + tv.tv_usec;
+	return tv.tv_sec * 1000000ULL + tv.tv_usec;
+#endif
 }
 
 /* just marks the alarm as received */

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 static unsigned int unalign;
 
@@ -23,9 +24,15 @@ static inline int posix_memalign(void **memptr, size_t alignment, size_t size)
 
 static inline unsigned long long rdtsc()
 {
+#ifdef CLOCK_MONOTONIC
+	struct timespec tv;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+	return (tv.tv_sec * 1000000000ULL + tv.tv_nsec) / 1000ULL;
+#else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return tv.tv_sec * 1000000 + tv.tv_usec;
+	return tv.tv_sec * 1000000ULL + tv.tv_usec;
+#endif
 }
 
 unsigned int bench_memcpy(unsigned int loop, unsigned int size)
