@@ -682,6 +682,9 @@ void alarm_handler(int sig)
 	if (usec < 1)
 		usec = 1;
 
+	if (usec < 95 * interval_usec / 100 || usec >= 105 * interval_usec / 100)
+		goto rearm;
+
 	rounds /= usec; // express it in B/us = MB/s
 	if (!skip_measures) {
 		printf("%llu", (unsigned long long)rounds);
@@ -697,6 +700,7 @@ void alarm_handler(int sig)
 
 	if (meas_count && --meas_count) {
 		/* rearm the timer for another measure */
+rearm:
 		start_time = now;
 		set_alarm(interval_usec);
 	}
