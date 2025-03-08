@@ -77,6 +77,8 @@ static int nbthreads = 1;
 static int ready_threads;
 static __thread int thread_num;
 static int no_hugepages;
+static int efficiency = 60;
+static int buswidth = -1; // disabled
 
 void *(*run)(void *private);
 void set_alarm(unsigned int usec);
@@ -681,8 +683,13 @@ void alarm_handler(int sig)
 		usec = 1;
 
 	rounds /= usec; // express it in B/us = MB/s
-	if (!skip_measures)
-		printf("%llu\n", (unsigned long long)rounds);
+	if (!skip_measures) {
+		printf("%llu", (unsigned long long)rounds);
+		if (buswidth > 0 && efficiency > 0) {
+			printf(" DDR-%llu/%d @%d%%", (unsigned long long)rounds * 100ULL * 8ULL / (unsigned long long)(efficiency * buswidth), buswidth, efficiency);
+		}
+		putchar('\n');
+	}
 	else
 		skip_measures--;
 
@@ -843,6 +850,14 @@ int main(int argc, char **argv)
 			nbthreads = atoi(argv[2]);
 			argc--; argv++;
 		}
+		else if (strcmp(argv[1], "-b") == 0 && argc > 2) {
+			buswidth = atoi(argv[2]);
+			argc--; argv++;
+		}
+		else if (strcmp(argv[1], "-e") == 0 && argc > 2) {
+			efficiency = atoi(argv[2]);
+			argc--; argv++;
+		}
 		else if (strcmp(argv[1], "-G") == 0) {
 			implementation = USE_GENERIC;
 		}
@@ -876,6 +891,8 @@ int main(int argc, char **argv)
 				"Usage: prog [options]* [<time_ms> [<count> [<size_kB>]]]\n"
 				"  -t <threads> : start this number of threads (default: %d)\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt and skip 1st value.\n"
+			        "  -b <width> : estimate BW rating based on this bus width in bits.\n"
+			        "  -e <eff> : assume this BW efficiency in %% for BW rating estimation (def 60).\n"
 #ifdef MADV_HUGEPAGE
 				"  -H : disable Huge Pages when supported\n"
 #endif
