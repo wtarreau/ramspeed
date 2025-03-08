@@ -1,5 +1,5 @@
 CC         := gcc
-CFLAGS     := -O3 -Wall -fomit-frame-pointer
+CFLAGS     := -O3 -Wall -fomit-frame-pointer -march=native
 OBJS       := ramlat rambw ramwalk
 
 all: $(OBJS)
