@@ -42,8 +42,10 @@
  */
 #if defined(__x86_64__)
 #define BYTES_PER_ROUND   256
+#define DEFAULT_EFFICIENCY 80
 #else
 #define BYTES_PER_ROUND  2048
+#define DEFAULT_EFFICIENCY 58
 #endif
 
 #define USE_GENERIC 0
@@ -78,7 +80,7 @@ static int nbthreads = 1;
 static int ready_threads;
 static __thread int thread_num;
 static int no_hugepages;
-static int efficiency = 60;
+static int efficiency = DEFAULT_EFFICIENCY;
 static int buswidth = -1; // disabled
 
 void *(*run)(void *private);
@@ -903,7 +905,7 @@ int main(int argc, char **argv)
 				"  -t <threads> : start this number of threads (default: %d)\n"
 				"  -s : slowstart : pre-heat for 500ms to let cpufreq adapt and skip 1st value.\n"
 			        "  -b <width> : estimate BW rating based on this bus width in bits.\n"
-			        "  -e <eff> : assume this BW efficiency in %% for BW rating estimation (def 60).\n"
+			        "  -e <eff> : assume this BW efficiency in %% for BW rating estimation (def %d).\n"
 #ifdef MADV_HUGEPAGE
 				"  -H : disable Huge Pages when supported\n"
 #endif
@@ -925,7 +927,8 @@ int main(int argc, char **argv)
 				"  -8 : use ARMv8\n"
 #endif
 				"Defaults: time=100ms, count=1, size=16MB per thread\n",
-				default_thread_count());
+			        default_thread_count(),
+				DEFAULT_EFFICIENCY);
 			exit(!!strcmp(argv[1], "-h"));
 		}
 		argc--;
